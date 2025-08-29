@@ -66,8 +66,10 @@ class PerfilUsuarioFragment : Fragment() {
         }
 
         user?.let {
-            // Exibe a foto do perfil usando a biblioteca Glide
-            Glide.with(this).load(it.photoUrl).into(userProfileImageView)
+            Glide.with(this)
+                .load(it.photoUrl)
+                .circleCrop() //Deixando a img redonda
+                .into(userProfileImageView)
         }
 
         return view
