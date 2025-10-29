@@ -56,6 +56,15 @@ class HomeFragment : Fragment() {
         pomodoroViewModel.remainingMillis.observe(viewLifecycleOwner) { millis ->
             binding.textTimer.text = formatMillis(millis)
         }
+        pomodoroViewModel.totalMillis.observe(viewLifecycleOwner) { total ->
+            val remaining = pomodoroViewModel.remainingMillis.value ?: total
+            updateProgress(total, remaining)
+        }
+        // Also update when remaining changes to animate progress
+        pomodoroViewModel.remainingMillis.observe(viewLifecycleOwner) { remaining ->
+            val total = pomodoroViewModel.totalMillis.value ?: 1L
+            updateProgress(total, remaining)
+        }
         pomodoroViewModel.cycleCount.observe(viewLifecycleOwner) { count ->
             binding.textCycle.text = "Ciclo: $count"
         }
@@ -80,5 +89,10 @@ class HomeFragment : Fragment() {
         val minutes = totalSeconds / 60
         val seconds = totalSeconds % 60
         return String.format("%02d:%02d", minutes, seconds)
+    }
+
+    private fun updateProgress(totalMillis: Long, remainingMillis: Long) {
+        // Custom arc view draws progress fractionally with animation
+        binding.pomoProgress.setProgressByMillis(totalMillis, remainingMillis, animate = true)
     }
 }
