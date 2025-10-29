@@ -27,6 +27,10 @@ class PomodoroViewModel : ViewModel() {
     private val _cycleCount = MutableLiveData(0)
     val cycleCount: LiveData<Int> = _cycleCount
 
+    // Total duration of the current session (millis) to drive progress UI
+    private val _totalMillis = MutableLiveData<Long>(workDuration)
+    val totalMillis: LiveData<Long> = _totalMillis
+
     private var currentDuration = workDuration
     private var timer: CountDownTimer? = null
 
@@ -47,6 +51,7 @@ class PomodoroViewModel : ViewModel() {
         _state.value = newState
         currentDuration = duration
         _remainingMillis.value = duration
+        _totalMillis.value = duration
         _isRunning.value = true
         timer = object : CountDownTimer(duration, 1000) {
             override fun onTick(millisUntilFinished: Long) {
@@ -110,6 +115,7 @@ class PomodoroViewModel : ViewModel() {
         _state.value = State.IDLE
         _isRunning.value = false
         _remainingMillis.value = workDuration
+        _totalMillis.value = workDuration
         currentDuration = workDuration
     }
 
@@ -131,6 +137,7 @@ class PomodoroViewModel : ViewModel() {
             State.SHORT_BREAK, State.LONG_BREAK, State.IDLE, State.PAUSED -> {
                 _state.value = State.WORK
                 _remainingMillis.value = workDuration
+                _totalMillis.value = workDuration
             }
             else -> {}
         }
