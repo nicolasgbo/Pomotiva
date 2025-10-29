@@ -18,17 +18,27 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="24dp"/>
 
-    <TextView
-        android:id="@+id/text_timer"
+    <FrameLayout
+        android:id="@+id/timer_circle_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="25:00"
-        android:textSize="48sp"
-        android:textStyle="bold"
+        android:background="@drawable/bg_pomodoro_circle"
         app:layout_constraintTop_toBottomOf="@id/text_state"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:id="@+id/text_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="25:00"
+            android:textColor="@color/white"
+            android:textSize="48sp"
+            android:textStyle="bold"
+            android:layout_gravity="center" />
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/text_cycle"
@@ -36,7 +46,7 @@
         android:layout_height="wrap_content"
         android:text="Ciclo: 0"
         android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/text_timer"
+        app:layout_constraintTop_toBottomOf="@id/timer_circle_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"/>

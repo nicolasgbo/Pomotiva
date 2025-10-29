@@ -7,4 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Pomotiva brand colors -->
+    <color name="pomotiva_primary">#58b873</color>
+    <color name="pomotiva_secondary">#8259f0</color>
 </resources>
