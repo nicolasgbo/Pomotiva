@@ -18,6 +18,8 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import com.ifpr.androidapptemplate.MainActivity
 import com.ifpr.androidapptemplate.R
 import com.ifpr.androidapptemplate.ui.usuario.CadastroUsuarioActivity
@@ -31,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var btnGoogleSignIn: SignInButton
     private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var usersRef: DatabaseReference
 
     companion object {
         private const val RC_SIGN_IN = 9001
@@ -45,6 +48,9 @@ class LoginActivity : AppCompatActivity() {
 
         // Inicializa o Firebase Auth
         firebaseAuth = FirebaseAuth.getInstance()
+
+        // Referência ao nó de usuários no Realtime Database
+        usersRef = FirebaseDatabase.getInstance().getReference("users")
 
         emailEditText = findViewById(R.id.edit_text_email)
         passwordEditText = findViewById(R.id.edit_text_password)
@@ -61,13 +67,14 @@ class LoginActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // Login com e-mail/senha
         loginButton.setOnClickListener {
             val email = emailEditText.text.toString()
             val password = passwordEditText.text.toString()
             signIn(email, password)
         }
 
-        // Configuration do Google Sign-In
+        // Configuração do Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
@@ -75,38 +82,9 @@ class LoginActivity : AppCompatActivity() {
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        // Set up the sign-in button click handler
+        // Clique do botão Google
         btnGoogleSignIn.setOnClickListener {
             signInGoogle()
-        }
-    }
-
-    private fun signIn(email: String, password: String) {
-        firebaseAuth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    Log.d(TAG, "signInWithEmail:success")
-                    updateUI(firebaseAuth.currentUser)
-                } else {
-                    Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
-                    updateUI(null)
-                }
-            }
-    }
-
-    private fun updateUI(user: FirebaseUser?) {
-        if (user != null) {
-            // Navegue para a proxima atividade
-            val intent = Intent(applicationContext, MainActivity::class.java)
-            startActivity(intent)
-        } else {
-            Toast.makeText(
-                applicationContext,
-                "Email ou senha incorretos",
-                Toast.LENGTH_SHORT
-            ).show()
         }
     }
 
@@ -122,7 +100,12 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     // Login bem-sucedido, navegar para a atividade principal ou atualizar UI
                     Log.d(TAG, "signInWithGoogle:success")
-                    updateUI(firebaseAuth.currentUser)
+                    firebaseAuth.currentUser?.let { user ->
+                        ensureUserNode(user)
+                        updateUI(user)
+                    } ?: run {
+                        updateUI(null)
+                    }
                 } else {
                     // Tratar falha de login
                     Log.w(TAG, "signInWithGoogle:failure", task.exception)
@@ -131,6 +114,44 @@ class LoginActivity : AppCompatActivity() {
                     updateUI(null)
                 }
             }
+    }
+
+    private fun ensureUserNode(user: FirebaseUser) {
+        val uid = user.uid
+        val payload = mapOf(
+            "displayName" to (user.displayName ?: ""),
+            "email" to (user.email ?: ""),
+            "createdAt" to System.currentTimeMillis()
+        )
+        usersRef.child(uid).get()
+            .addOnSuccessListener { snapshot ->
+                if (!snapshot.exists()) {
+                    usersRef.child(uid).setValue(payload)
+                }
+            }
+    }
+
+    private fun signIn(email: String, password: String) {
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "signInWithEmail:success")
+                    updateUI(firebaseAuth.currentUser)
+                } else {
+                    Log.w(TAG, "signInWithEmail:failure", task.exception)
+                    Toast.makeText(baseContext, "Authentication failed.", Toast.LENGTH_SHORT).show()
+                    updateUI(null)
+                }
+            }
+    }
+
+    private fun updateUI(user: FirebaseUser?) {
+        if (user != null) {
+            val intent = Intent(applicationContext, MainActivity::class.java)
+            startActivity(intent)
+        } else {
+            Toast.makeText(applicationContext, "Email ou senha incorretos", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
