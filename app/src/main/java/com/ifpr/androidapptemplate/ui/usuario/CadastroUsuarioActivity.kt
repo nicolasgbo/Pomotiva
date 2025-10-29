@@ -11,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import com.ifpr.androidapptemplate.R
 
 
@@ -31,6 +32,9 @@ class CadastroUsuarioActivity  : AppCompatActivity() {
 
         // Inicializa o Firebase Auth
         auth = FirebaseAuth.getInstance()
+
+        // Inicializa referência ao nó de usuários no Realtime Database
+        database = FirebaseDatabase.getInstance().getReference("users")
 
         textCadastroUsuarioTitle = findViewById(R.id.textCadastroUsuarioTitle)
         registerNameEditText = findViewById(R.id.registerNameEditText)
@@ -83,6 +87,8 @@ class CadastroUsuarioActivity  : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                         val user = auth.currentUser
+                        // Cria o perfil do usuário no Realtime Database
+                        createUserProfileInRealtimeDb(user, name, email)
                         updateProfile(user, name)
                         sendEmailVerification(user)
                     } else {
@@ -136,5 +142,22 @@ class CadastroUsuarioActivity  : AppCompatActivity() {
                         Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+
+    private fun createUserProfileInRealtimeDb(user: FirebaseUser?, displayName: String, email: String) {
+        val uid = user?.uid ?: return
+        val payload = mapOf(
+            "displayName" to displayName,
+            "email" to email,
+            "createdAt" to System.currentTimeMillis()
+        )
+        try {
+            database.child(uid).setValue(payload)
+                .addOnFailureListener { e ->
+                    Log.e("FirebaseDB", "Falha ao criar perfil do usuário no RD", e)
+                }
+        } catch (e: Exception) {
+            Log.e("FirebaseDB", "Exceção ao acessar RD", e)
+        }
     }
 }
