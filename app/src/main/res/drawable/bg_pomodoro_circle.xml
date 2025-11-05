@@ -2,12 +2,12 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
 
-    <size android:width="240dp" android:height="240dp" />
+    <size android:width="256dp" android:height="256dp" />
 
     <gradient
         android:type="linear"
         android:angle="45"
-        android:startColor="@color/pomotiva_primary"
-        android:endColor="@color/pomotiva_secondary" />
+        android:startColor="#6658B873"
+        android:endColor="#668259F0" />
 
 </shape>

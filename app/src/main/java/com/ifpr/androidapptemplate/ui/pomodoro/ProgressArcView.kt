@@ -16,11 +16,21 @@ class ProgressArcView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    // Paint da trilha (barra constante 360° ao fundo)
+    private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        color = ContextCompat.getColor(context, android.R.color.darker_gray)
+        alpha = 60 // levemente translúcido
+        strokeWidth = dp(8f)
+    }
+
+    // Paint do progresso por cima da trilha
     private val arcPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
-        color = ContextCompat.getColor(context, R.color.pomotiva_secondary) // roxo
-        strokeWidth = dp(10f) // espessura intermediária
+        color = ContextCompat.getColor(context, R.color.pomotiva_secondary) // cor de destaque
+        strokeWidth = dp(8f)
     }
 
     private val arcBounds = RectF()
@@ -34,7 +44,9 @@ class ProgressArcView @JvmOverloads constructor(
     private var animator: ValueAnimator? = null
 
     fun setStrokeWidthDp(widthDp: Float) {
-        arcPaint.strokeWidth = dp(widthDp)
+        val px = dp(widthDp)
+        arcPaint.strokeWidth = px
+        trackPaint.strokeWidth = px
         invalidate()
     }
 
@@ -79,9 +91,13 @@ class ProgressArcView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        // trilha completa ao fundo
+        canvas.drawArc(arcBounds, 0f, 360f, false, trackPaint)
+        // arco de progresso por cima
         val sweep = 360f * progress
         canvas.drawArc(arcBounds, startAngleDeg, sweep, false, arcPaint)
     }
 
     private fun dp(value: Float): Float = value * context.resources.displayMetrics.density
 }
+
