@@ -4,4 +4,21 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
     <string name="title_profile">Profile</string>
+    <!-- Pomodoro dialog strings -->
+    <string name="pomodoro_title">Tempos de Pomodoro</string>
+    <string name="pomodoro_close_cd">Fechar</string>
+    <string name="pomodoro_beginner">Iniciante</string>
+    <string name="pomodoro_standard">Padrão</string>
+    <string name="pomodoro_focus">Foco</string>
+    <string name="pomodoro_immersion">Imersão</string>
+    <string name="pomodoro_custom">Personalizável</string>
+    <string name="pomodoro_custom_hint">Ajuste o foco e a pausa</string>
+    <string name="pomodoro_focus_label">Foco: %1$d min</string>
+    <string name="pomodoro_break_label">Pausa: %1$d min</string>
+    <string name="pomodoro_beginner_details">15 min foco • 5 min pausa</string>
+    <string name="pomodoro_standard_details">25 min foco • 5 min pausa</string>
+    <string name="pomodoro_focus_details">40 min foco • 15 min pausa</string>
+    <string name="pomodoro_immersion_details">60 min foco • 15 min pausa</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_apply">Aplicar</string>
 </resources>

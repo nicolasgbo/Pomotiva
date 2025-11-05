@@ -10,4 +10,6 @@
     <!-- Pomotiva brand colors -->
     <color name="pomotiva_primary">#58b873</color>
     <color name="pomotiva_secondary">#8259f0</color>
+    <!-- Text secondary (cinza suave para subtítulos) -->
+    <color name="text_secondary">#99000000</color>
 </resources>

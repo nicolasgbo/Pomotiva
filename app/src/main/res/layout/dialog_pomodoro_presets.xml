@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/pomodoro_title"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:fontFamily="@font/poppins_semibold"/>
+
+            <ImageButton
+                android:id="@+id/btn_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/pomodoro_close_cd"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@color/pomotiva_secondary"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/group_presets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Iniciante -->
+            <LinearLayout
+                android:id="@+id/row_beginner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:foreground="?attr/selectableItemBackground"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <RadioButton
+                    android:id="@+id/rb_beginner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    app:buttonTint="@color/pomotiva_secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_beginner"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_beginner_details"
+                        android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Padrão -->
+            <LinearLayout
+                android:id="@+id/row_standard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:foreground="?attr/selectableItemBackground"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <RadioButton
+                    android:id="@+id/rb_standard"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text=""
+                    app:buttonTint="@color/pomotiva_secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_standard"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_standard_details"
+                        android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Foco -->
+            <LinearLayout
+                android:id="@+id/row_focus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:foreground="?attr/selectableItemBackground"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <RadioButton
+                    android:id="@+id/rb_focus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    app:buttonTint="@color/pomotiva_secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_focus"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_focus_details"
+                        android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Imersão -->
+            <LinearLayout
+                android:id="@+id/row_immersion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:foreground="?attr/selectableItemBackground"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <RadioButton
+                    android:id="@+id/rb_immersion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    app:buttonTint="@color/pomotiva_secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_immersion"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_immersion_details"
+                        android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Personalizável -->
+            <LinearLayout
+                android:id="@+id/row_custom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:foreground="?attr/selectableItemBackground"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <RadioButton
+                    android:id="@+id/rb_custom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    app:buttonTint="@color/pomotiva_secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_custom"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/pomodoro_custom_hint"
+                        android:textColor="@color/text_secondary"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/custom_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingTop="8dp">
+
+            <TextView
+                android:id="@+id/label_custom_focus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/pomodoro_focus_label"
+                android:fontFamily="@font/poppins_semibold"/>
+
+            <SeekBar
+                android:id="@+id/seek_focus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:progress="25"
+                android:progressTint="@color/pomotiva_secondary"
+                android:secondaryProgressTint="@color/pomotiva_secondary"
+                android:thumbTint="@color/pomotiva_secondary"/>
+
+            <TextView
+                android:id="@+id/label_custom_break"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:text="@string/pomodoro_break_label"
+                android:fontFamily="@font/poppins_semibold"/>
+
+            <SeekBar
+                android:id="@+id/seek_break"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="30"
+                android:progress="5"
+                android:progressTint="@color/pomotiva_secondary"
+                android:secondaryProgressTint="@color/pomotiva_secondary"
+                android:thumbTint="@color/pomotiva_secondary"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp">
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/action_cancel"
+                android:fontFamily="@font/poppins_semibold"
+                android:backgroundTint="@color/pomotiva_secondary"
+                android:textColor="@color/white"/>
+
+            <Button
+                android:id="@+id/btn_apply"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/action_apply"
+                android:layout_marginStart="12dp"
+                android:fontFamily="@font/poppins_semibold"
+                android:backgroundTint="@color/pomotiva_secondary"
+                android:textColor="@color/white"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
+
+
