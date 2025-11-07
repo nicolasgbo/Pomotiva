@@ -1,0 +1,1358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.metas.MetasFragment">
+
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:paddingTop="?attr/actionBarSize"
+        android:paddingBottom="?attr/actionBarSize"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Conteúdo copiado de fragment_notifications.xml -->
+        <LinearLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Cabeçalho da tela -->
+            <TextView
+                android:id="@+id/header_goals"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
+                android:text="Defina suas metas"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:fontFamily="@font/poppins_semibold"
+                app:fontFamily="@font/poppins_semibold"/>
+
+            <!-- Seção Meta Diária -->
+            <LinearLayout
+                android:id="@+id/section_daily"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:id="@+id/title_daily"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Meta diária"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        app:fontFamily="@font/poppins_semibold"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="8dp"
+                        android:src="@drawable/circle_dot" />
+                    <TextView
+                        android:id="@+id/subtitle_daily"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="quinta, 06"/>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_add_daily"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Adicionar meta"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:icon="@drawable/ic_add_24"
+                    app:iconTint="@color/white"
+                    app:iconPadding="12dp"
+                    app:iconGravity="textStart"
+                    app:backgroundTint="@color/pomotiva_secondary"
+                    app:cornerRadius="12dp"/>
+
+                <!-- Formulário Meta Diária (colapsável) -->
+                <LinearLayout
+                    android:id="@+id/form_daily_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deseja completar quantos ciclos hoje?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"
+                        app:fontFamily="@font/poppins_semibold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/til_outline_state"
+                        android:addStatesFromChildren="true"
+                        android:padding="4dp"
+                        app:boxBackgroundMode="none"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:hintEnabled="false">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/input_daily_cycles"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="40dp"
+                            android:paddingVertical="6dp"
+                            android:includeFontPadding="false"
+                            android:gravity="center_vertical"
+                            android:background="@android:color/transparent"
+                            android:inputType="number"
+                            android:hint="0"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/pomotiva_secondary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Deseja adicionar alguma tarefa?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"
+                        app:fontFamily="@font/poppins_semibold"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="6dp">
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/til_outline_state"
+                            android:addStatesFromChildren="true"
+                            android:padding="6dp"
+                            app:boxBackgroundMode="none"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:hintEnabled="false">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_daily_task"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:paddingVertical="8dp"
+                                android:includeFontPadding="true"
+                                android:gravity="top|start"
+                                android:inputType="textMultiLine"
+                                android:maxLines="4"
+                                android:background="@android:color/transparent"
+                                android:hint="Descreva a tarefa"
+                                android:textColor="@color/black"
+                                android:textColorHint="@color/pomotiva_secondary"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_add_daily_task"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="56dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="8dp"
+                            android:contentDescription="Adicionar tarefa"
+                            app:icon="@drawable/ic_add_24"
+                            app:iconTint="@color/white"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+
+                    <!-- Cabeçalho das tarefas atuais -->
+                    <TextView
+                        android:id="@+id/daily_tasks_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="Tarefas atuais"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:visibility="gone"/>
+
+                    <!-- Lista de tarefas adicionadas -->
+                    <LinearLayout
+                        android:id="@+id/daily_tasks_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="6dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_save_daily"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:text="Salvar"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:backgroundTint="@color/pomotiva_secondary"
+                            app:cornerRadius="12dp"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_cancel_daily"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="Excluir"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:strokeColor="@color/pomotiva_secondary"
+                            app:strokeWidth="2dp"
+                            app:cornerRadius="12dp"
+                            app:iconTint="@color/pomotiva_secondary"
+                            android:textColor="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Resumo Meta Diária (após salvar) em card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/summary_daily_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#F7F7F9"
+                    app:cardUseCompatPadding="true"
+                    app:cardPreventCornerOverlap="true">
+
+                    <LinearLayout
+                        android:id="@+id/summary_daily_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/summary_daily_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Metas diárias definidas"
+                            android:gravity="center"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:layout_marginBottom="4dp"/>
+
+                        <!-- Data de criação -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_calendar_24"/>
+                            <TextView
+                                android:id="@+id/summary_daily_date"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="Data de criação: --/--/----"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <!-- Quantidade de ciclos com ícone -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="2dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_goals_black_24dp"/>
+                            <TextView
+                                android:id="@+id/summary_daily_cycles"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"
+                                />
+                        </LinearLayout>
+
+                        <!-- Título tarefas definidas com ícone -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="4dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_task_24"/>
+                            <TextView
+                                android:id="@+id/summary_daily_tasks_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="Tarefas definidas:"
+                                android:textColor="@color/black"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:fontFamily="@font/poppins_semibold"/>
+                        </LinearLayout>
+
+                        <!-- Lista de tarefas -->
+                        <LinearLayout
+                            android:id="@+id/summary_daily_tasks_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="2dp"
+                            android:paddingStart="24dp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Seção Meta Semanal -->
+            <LinearLayout
+                android:id="@+id/section_weekly"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:id="@+id/title_weekly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Meta semanal"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        app:fontFamily="@font/poppins_semibold"/>
+                    <ImageView
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:src="@drawable/circle_dot"/>
+                    <TextView
+                        android:id="@+id/subtitle_weekly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="semana 45"/>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_add_weekly"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Adicionar meta"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:icon="@drawable/ic_add_24"
+                    app:iconTint="@color/white"
+                    app:iconPadding="12dp"
+                    app:iconGravity="textStart"
+                    app:backgroundTint="@color/pomotiva_secondary"
+                    app:cornerRadius="12dp"/>
+
+                <!-- Formulário Meta Semanal (colapsável) -->
+                <LinearLayout
+                    android:id="@+id/form_weekly_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deseja completar quantos ciclos nesta semana?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/til_outline_state"
+                        android:addStatesFromChildren="true"
+                        android:padding="4dp"
+                        app:boxBackgroundMode="none"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:hintEnabled="false">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/input_weekly_cycles"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="40dp"
+                            android:paddingVertical="6dp"
+                            android:includeFontPadding="false"
+                            android:gravity="center_vertical"
+                            android:background="@android:color/transparent"
+                            android:inputType="number"
+                            android:hint="0"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/pomotiva_secondary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Deseja adicionar alguma tarefa?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="6dp">
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/til_outline_state"
+                            android:addStatesFromChildren="true"
+                            android:padding="6dp"
+                            app:boxBackgroundMode="none"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:hintEnabled="false">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_weekly_task"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:paddingVertical="8dp"
+                                android:includeFontPadding="true"
+                                android:gravity="top|start"
+                                android:inputType="textMultiLine"
+                                android:maxLines="4"
+                                android:background="@android:color/transparent"
+                                android:hint="Descreva a tarefa"
+                                android:textColor="@color/black"
+                                android:textColorHint="@color/pomotiva_secondary"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_add_weekly_task"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="56dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="8dp"
+                            android:contentDescription="Adicionar tarefa"
+                            app:icon="@drawable/ic_add_24"
+                            app:iconTint="@color/white"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/weekly_tasks_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="Tarefas atuais"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:visibility="gone"/>
+
+                    <LinearLayout
+                        android:id="@+id/weekly_tasks_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="6dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_save_weekly"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:text="Salvar"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:backgroundTint="@color/pomotiva_secondary"
+                            app:cornerRadius="12dp"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_cancel_weekly"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="Excluir"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:strokeColor="@color/pomotiva_secondary"
+                            app:strokeWidth="2dp"
+                            app:cornerRadius="12dp"
+                            app:iconTint="@color/pomotiva_secondary"
+                            android:textColor="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Resumo Meta Semanal (após salvar) em card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/summary_weekly_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#F7F7F9"
+                    app:cardUseCompatPadding="true"
+                    app:cardPreventCornerOverlap="true">
+
+                    <LinearLayout
+                        android:id="@+id/summary_weekly_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/summary_weekly_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Metas semanais definidas"
+                            android:gravity="center"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:layout_marginBottom="4dp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_calendar_24"/>
+                            <TextView
+                                android:id="@+id/summary_weekly_date"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Data de criação: --/--/----"
+                                android:layout_marginStart="4dp"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="2dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_goals_black_24dp"/>
+                            <TextView
+                                android:id="@+id/summary_weekly_cycles"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="4dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_task_24"/>
+                            <TextView
+                                android:id="@+id/summary_weekly_tasks_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="Tarefas definidas:"
+                                android:textColor="@color/black"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:fontFamily="@font/poppins_semibold"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/summary_weekly_tasks_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="2dp"
+                            android:paddingStart="24dp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Seção Meta Mensal -->
+            <LinearLayout
+                android:id="@+id/section_monthly"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:id="@+id/title_monthly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Meta mensal"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"/>
+                    <ImageView
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:src="@drawable/circle_dot"/>
+                    <TextView
+                        android:id="@+id/subtitle_monthly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="novembro"/>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_add_monthly"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Adicionar meta"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:gravity="center"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:icon="@drawable/ic_add_24"
+                    app:iconTint="@color/white"
+                    app:iconPadding="12dp"
+                    app:iconGravity="textStart"
+                    app:backgroundTint="@color/pomotiva_secondary"
+                    app:cornerRadius="12dp"/>
+
+                <!-- Formulário Meta Mensal (colapsável) -->
+                <LinearLayout
+                    android:id="@+id/form_monthly_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deseja completar quantos ciclos neste mês?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/til_outline_state"
+                        android:addStatesFromChildren="true"
+                        android:padding="4dp"
+                        app:boxBackgroundMode="none"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:hintEnabled="false">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/input_monthly_cycles"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="40dp"
+                            android:paddingVertical="6dp"
+                            android:includeFontPadding="false"
+                            android:gravity="center_vertical"
+                            android:background="@android:color/transparent"
+                            android:inputType="number"
+                            android:hint="0"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/pomotiva_secondary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Deseja adicionar alguma tarefa?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="6dp">
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/til_outline_state"
+                            android:addStatesFromChildren="true"
+                            android:padding="6dp"
+                            app:boxBackgroundMode="none"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:hintEnabled="false">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_monthly_task"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:paddingVertical="8dp"
+                                android:includeFontPadding="true"
+                                android:gravity="top|start"
+                                android:inputType="textMultiLine"
+                                android:maxLines="4"
+                                android:background="@android:color/transparent"
+                                android:hint="Descreva a tarefa"
+                                android:textColor="@color/black"
+                                android:textColorHint="@color/pomotiva_secondary"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_add_monthly_task"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="56dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="8dp"
+                            android:contentDescription="Adicionar tarefa"
+                            app:icon="@drawable/ic_add_24"
+                            app:iconTint="@color/white"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/monthly_tasks_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="Tarefas atuais"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:visibility="gone"/>
+
+                    <LinearLayout
+                        android:id="@+id/monthly_tasks_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="6dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_save_monthly"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:text="Salvar"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:backgroundTint="@color/pomotiva_secondary"
+                            app:cornerRadius="12dp"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_cancel_monthly"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="Excluir"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:strokeColor="@color/pomotiva_secondary"
+                            app:strokeWidth="2dp"
+                            app:cornerRadius="12dp"
+                            app:iconTint="@color/pomotiva_secondary"
+                            android:textColor="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Resumo Meta Mensal (após salvar) em card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/summary_monthly_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#F7F7F9"
+                    app:cardUseCompatPadding="true"
+                    app:cardPreventCornerOverlap="true">
+
+                    <LinearLayout
+                        android:id="@+id/summary_monthly_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/summary_monthly_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Metas mensais definidas"
+                            android:gravity="center"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:layout_marginBottom="4dp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_calendar_24"/>
+                            <TextView
+                                android:id="@+id/summary_monthly_date"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Data de criação: --/--/----"
+                                android:layout_marginStart="4dp"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="2dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_goals_black_24dp"/>
+                            <TextView
+                                android:id="@+id/summary_monthly_cycles"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="4dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_task_24"/>
+                            <TextView
+                                android:id="@+id/summary_monthly_tasks_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="Tarefas definidas:"
+                                android:textColor="@color/black"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:fontFamily="@font/poppins_semibold"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/summary_monthly_tasks_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="2dp"
+                            android:paddingStart="24dp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Seção Meta Anual -->
+            <LinearLayout
+                android:id="@+id/section_yearly"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="24dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:id="@+id/title_yearly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Meta anual"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"/>
+                    <ImageView
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:src="@drawable/circle_dot"/>
+                    <TextView
+                        android:id="@+id/subtitle_yearly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="2025"/>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_add_yearly"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Adicionar meta"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:gravity="center"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:icon="@drawable/ic_add_24"
+                    app:iconTint="@color/white"
+                    app:iconPadding="12dp"
+                    app:iconGravity="textStart"
+                    app:backgroundTint="@color/pomotiva_secondary"
+                    app:cornerRadius="12dp"/>
+
+                <!-- Formulário Meta Anual (colapsável) -->
+                <LinearLayout
+                    android:id="@+id/form_yearly_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Deseja completar quantos ciclos neste ano?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/til_outline_state"
+                        android:addStatesFromChildren="true"
+                        android:padding="4dp"
+                        app:boxBackgroundMode="none"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:hintEnabled="false">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/input_yearly_cycles"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="40dp"
+                            android:paddingVertical="6dp"
+                            android:includeFontPadding="false"
+                            android:gravity="center_vertical"
+                            android:background="@android:color/transparent"
+                            android:inputType="number"
+                            android:hint="0"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/pomotiva_secondary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Deseja adicionar alguma tarefa?"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins_semibold"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="6dp">
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/til_outline_state"
+                            android:addStatesFromChildren="true"
+                            android:padding="6dp"
+                            app:boxBackgroundMode="none"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:hintEnabled="false">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/input_yearly_task"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:paddingVertical="8dp"
+                                android:includeFontPadding="true"
+                                android:gravity="top|start"
+                                android:inputType="textMultiLine"
+                                android:maxLines="4"
+                                android:background="@android:color/transparent"
+                                android:hint="Descreva a tarefa"
+                                android:textColor="@color/black"
+                                android:textColorHint="@color/pomotiva_secondary"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_add_yearly_task"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="56dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="8dp"
+                            android:contentDescription="Adicionar tarefa"
+                            app:icon="@drawable/ic_add_24"
+                            app:iconTint="@color/white"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/yearly_tasks_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:text="Tarefas atuais"
+                        android:textColor="@color/black"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:visibility="gone"/>
+
+                    <LinearLayout
+                        android:id="@+id/yearly_tasks_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="6dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_save_yearly"
+                            style="@style/Widget.MaterialComponents.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:text="Salvar"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:backgroundTint="@color/pomotiva_secondary"
+                            app:cornerRadius="12dp"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_cancel_yearly"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp"
+                            android:text="Excluir"
+                            android:textAllCaps="false"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/poppins_semibold"
+                            app:strokeColor="@color/pomotiva_secondary"
+                            app:strokeWidth="2dp"
+                            app:cornerRadius="12dp"
+                            app:iconTint="@color/pomotiva_secondary"
+                            android:textColor="@color/pomotiva_secondary"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Resumo Meta Anual (após salvar) em card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/summary_yearly_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#F7F7F9"
+                    app:cardUseCompatPadding="true"
+                    app:cardPreventCornerOverlap="true">
+
+                    <LinearLayout
+                        android:id="@+id/summary_yearly_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/summary_yearly_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Metas anuais definidas"
+                            android:gravity="center"
+                            android:textColor="@color/black"
+                            android:textStyle="bold"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:layout_marginBottom="4dp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_calendar_24"/>
+                            <TextView
+                                android:id="@+id/summary_yearly_date"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Data de criação: --/--/----"
+                                android:layout_marginStart="4dp"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="2dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_goals_black_24dp"/>
+                            <TextView
+                                android:id="@+id/summary_yearly_cycles"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:textColor="@color/black"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="4dp">
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:tint="@color/pomotiva_secondary"
+                                android:src="@drawable/ic_task_24"/>
+                            <TextView
+                                android:id="@+id/summary_yearly_tasks_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="Tarefas definidas:"
+                                android:textColor="@color/black"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:fontFamily="@font/poppins_semibold"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/summary_yearly_tasks_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="2dp"
+                            android:paddingStart="24dp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

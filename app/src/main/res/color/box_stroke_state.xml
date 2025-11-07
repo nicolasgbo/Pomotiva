@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cor da borda quando focado -->
+    <item android:state_focused="true" android:color="@color/pomotiva_secondary" />
+    <!-- Cor da borda quando habilitado e não focado -->
+    <item android:state_enabled="true" android:color="@color/pomotiva_secondary" />
+    <!-- Desabilitado -->
+    <item android:color="#33000000" />
+</selector>
