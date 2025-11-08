@@ -236,14 +236,12 @@ class MainActivity : AppCompatActivity() {
             val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(left = originalLeft + sb.left, right = originalRight + sb.right)
             insets
-        }
-
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_metas,
+                R.id.navigation_home, R.id.navigation_estatistica, R.id.navigation_metas,
                 R.id.navigation_profile
             )
         )
@@ -262,9 +260,9 @@ class MainActivity : AppCompatActivity() {
                     detachHomeToolbar()
                     attachGenericToolbar(title = getString(R.string.title_notifications), iconRes = R.drawable.ic_goals_black_24dp, showTune = false)
                 }
-                R.id.navigation_dashboard -> {
+                R.id.navigation_estatistica -> {
                     detachHomeToolbar()
-                    attachGenericToolbar(title = getString(R.string.title_dashboard), iconRes = R.drawable.ic_dashboard_black_24dp, showTune = false)
+                    attachGenericToolbar(title = getString(R.string.title_estatistica), iconRes = R.drawable.ic_finance_24, showTune = false)
                 }
                 R.id.navigation_profile -> {
                     detachHomeToolbar()

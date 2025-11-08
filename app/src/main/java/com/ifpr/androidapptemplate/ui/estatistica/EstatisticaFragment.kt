@@ -1,4 +1,4 @@
-package com.ifpr.androidapptemplate.ui.dashboard
+package com.ifpr.androidapptemplate.ui.estatistica
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.ifpr.androidapptemplate.databinding.FragmentDashboardBinding
+import com.ifpr.androidapptemplate.databinding.FragmentEstatisticaBinding
 
-class DashboardFragment : Fragment() {
+class EstatisticaFragment : Fragment() {
 
-    private var _binding: FragmentDashboardBinding? = null
+    private var _binding: FragmentEstatisticaBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -22,14 +22,14 @@ class DashboardFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val dashboardViewModel =
-            ViewModelProvider(this).get(DashboardViewModel::class.java)
+        val estatisticaViewModel =
+            ViewModelProvider(this).get(EstatisticaViewModel::class.java)
 
-        _binding = FragmentDashboardBinding.inflate(inflater, container, false)
+        _binding = FragmentEstatisticaBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
         val textView: TextView = binding.textDashboard
-        dashboardViewModel.text.observe(viewLifecycleOwner) {
+        estatisticaViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
         return root

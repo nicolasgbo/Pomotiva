@@ -2,6 +2,7 @@
     <string name="app_name">AndroidAppTemplate</string>
     <string name="title_home">Pomo</string>
     <string name="title_dashboard">Dashboard</string>
+    <string name="title_estatistica">Estatística</string>
     <string name="title_notifications">Metas</string>
     <string name="title_profile">Profile</string>
     <!-- Pomodoro dialog strings -->
