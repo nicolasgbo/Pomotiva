@@ -166,7 +166,7 @@ class PomodoroViewModel : ViewModel() {
             State.WORK -> {
                 val nextCycle = (_cycleCount.value ?: 0) + 1
                 _cycleCount.value = nextCycle
-                if (nextCycle % longBreakInterval == 0) {
+                if (nextCycle % LONG_BREAK_INTERVAL == 0) {
                     _state.value = State.LONG_BREAK
                     _remainingMillis.value = longBreakDurationMs
                 } else {
