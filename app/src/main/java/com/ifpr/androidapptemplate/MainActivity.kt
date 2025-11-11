@@ -236,6 +236,8 @@ class MainActivity : AppCompatActivity() {
             val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(left = originalLeft + sb.left, right = originalRight + sb.right)
             insets
+        }
+
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
