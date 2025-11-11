@@ -47,4 +47,10 @@
     <string name="estat_chart_title">Produtividade por período</string>
     <string name="estat_empty">Sem dados para o período selecionado</string>
     <string name="estat_try_again">Tentar novamente</string>
+
+    <!-- Perfil do usuário -->
+    <string name="profile_header_title">Perfil de Usuário</string>
+    <string name="profile_hint_name">Nome</string>
+    <string name="profile_hint_email">Email</string>
+    <string name="profile_cd_avatar">Foto de Perfil</string>
 </resources>
