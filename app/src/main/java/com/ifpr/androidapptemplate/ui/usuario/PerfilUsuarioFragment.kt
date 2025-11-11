@@ -5,9 +5,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
@@ -26,9 +23,6 @@ class PerfilUsuarioFragment : Fragment() {
 
     private var _binding: FragmentPerfilUsuarioBinding? = null
 
-    private lateinit var userProfileImageView: ImageView
-    private lateinit var registerNameEditText: EditText
-    private lateinit var registerEmailEditText: EditText
     private lateinit var usersReference: DatabaseReference
     private lateinit var auth: FirebaseAuth
 
@@ -41,14 +35,10 @@ class PerfilUsuarioFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view = inflater.inflate(R.layout.fragment_perfil_usuario, container, false)
+        _binding = FragmentPerfilUsuarioBinding.inflate(inflater, container, false)
 
         // Inicializa o Firebase Auth
         auth = FirebaseAuth.getInstance()
-
-        userProfileImageView = view.findViewById(R.id.userProfileImageView)
-        registerNameEditText = view.findViewById(R.id.registerNameEditText)
-        registerEmailEditText = view.findViewById(R.id.registerEmailEditText)
 
         try {
             usersReference = FirebaseDatabase.getInstance().getReference("users")
@@ -62,17 +52,17 @@ class PerfilUsuarioFragment : Fragment() {
         val user = auth.currentUser
 
         if (user != null) {
-            registerEmailEditText.isEnabled = false
+            binding.registerEmailEditText.isEnabled = false
         }
 
         user?.let {
             Glide.with(this)
                 .load(it.photoUrl)
                 .circleCrop() //Deixando a img redonda
-                .into(userProfileImageView)
+                .into(binding.userProfileImageView)
         }
 
-        return view
+        return binding.root
     }
 
     private fun signOut() {
@@ -94,8 +84,8 @@ class PerfilUsuarioFragment : Fragment() {
         // Acessar currentUser
         var userFirebase = auth.currentUser
         if(userFirebase != null){
-            registerNameEditText.setText(userFirebase.displayName)
-            registerEmailEditText.setText(userFirebase.email)
+            binding.registerNameEditText.setText(userFirebase.displayName)
+            binding.registerEmailEditText.setText(userFirebase.email)
         }
     }
 
