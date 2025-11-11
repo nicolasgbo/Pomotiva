@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Checked: borda roxa -->
+    <item android:state_checked="true" android:color="@color/pomotiva_secondary"/>
+    <!-- Default: borda roxa também (pouco perceptível sobre fundo roxo, mas mantém consistência) -->
+    <item android:color="@color/pomotiva_secondary"/>
+</selector>

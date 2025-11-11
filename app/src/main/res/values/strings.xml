@@ -2,6 +2,7 @@
     <string name="app_name">AndroidAppTemplate</string>
     <string name="title_home">Pomo</string>
     <string name="title_dashboard">Dashboard</string>
+    <string name="title_estatistica">Estatística</string>
     <string name="title_notifications">Metas</string>
     <string name="title_profile">Profile</string>
     <!-- Pomodoro dialog strings -->
@@ -21,4 +22,29 @@
     <string name="pomodoro_immersion_details">60 min foco • 15 min pausa</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_apply">Aplicar</string>
+
+    <!-- Estatística: período -->
+    <string name="period_today">Hoje</string>
+    <string name="period_week">Semana</string>
+    <string name="period_month">Mês</string>
+    <string name="period_year">Ano</string>
+
+    <!-- Estatística: KPIs -->
+    <string name="kpi_focus_time">Tempo focado</string>
+    <string name="kpi_sessions">Sessões</string>
+    <string name="kpi_completion">Taxa de conclusão</string>
+
+    <!-- Estatística: Metas -->
+    <string name="estat_metas_title">Metas</string>
+    <string name="estat_meta_target">Alvo</string>
+    <string name="estat_meta_current">Atual</string>
+    <string name="estat_meta_remaining">Falta</string>
+    <string name="estat_minutes_suffix">min</string>
+    <string name="estat_sessions_suffix">sessões</string>
+
+    <!-- Estatística: outros -->
+    <string name="estat_header_title">Suas Estatísticas</string>
+    <string name="estat_chart_title">Produtividade por período</string>
+    <string name="estat_empty">Sem dados para o período selecionado</string>
+    <string name="estat_try_again">Tentar novamente</string>
 </resources>
