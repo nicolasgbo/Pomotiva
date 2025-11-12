@@ -64,6 +64,9 @@ class PerfilUsuarioFragment : Fragment() {
         user?.let {
             Glide.with(this)
                 .load(it.photoUrl)
+                .placeholder(R.drawable.ic_avatar_placeholder)
+                .error(R.drawable.ic_avatar_placeholder)
+                .fallback(R.drawable.ic_avatar_placeholder)
                 .circleCrop() //Deixando a img redonda
                 .into(binding.userProfileImageView)
         }

@@ -24,7 +24,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import android.graphics.Color
 import android.widget.ImageView
-
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.drawable.BitmapDrawable
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,6 +45,45 @@ class MainActivity : AppCompatActivity() {
 
         // Controlamos manualmente os insets do sistema (status/navigation bar)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Aplica gradiente Pomodoro (#58b873 -> #8259f0) ao drawable do ImageView
+        fun applyPomodoroGradientToImageView(imageView: ImageView) {
+            val drawable = imageView.drawable ?: return
+            val width = (drawable.intrinsicWidth.takeIf { it > 0 } ?: imageView.width)
+            val height = (drawable.intrinsicHeight.takeIf { it > 0 } ?: imageView.height)
+            if (width <= 0 || height <= 0) {
+                imageView.post { applyPomodoroGradientToImageView(imageView) }
+                return
+            }
+
+            val iconBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val iconCanvas = Canvas(iconBitmap)
+            drawable.setBounds(0, 0, width, height)
+            drawable.draw(iconCanvas)
+
+            val gradientBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val gradientCanvas = Canvas(gradientBitmap)
+            val startHex = Color.parseColor("#58b873")
+            val endHex = Color.parseColor("#8259f0")
+            val shader = LinearGradient(
+                0f, 0f, width.toFloat(), height.toFloat(),
+                intArrayOf(startHex, endHex),
+                floatArrayOf(0f, 1f),
+                Shader.TileMode.CLAMP
+            )
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.shader = shader }
+            gradientCanvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+
+            // Mascara o gradiente com o alfa do ícone
+            paint.shader = null
+            paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+            gradientCanvas.drawBitmap(iconBitmap, 0f, 0f, paint)
+            paint.xfermode = null
+
+            // Evita que tint do ImageView sobrescreva o gradiente
+            imageView.imageTintList = null
+            imageView.setImageDrawable(BitmapDrawable(resources, gradientBitmap))
+        }
 
         // Função para montar a toolbar da Home quando necessário
         fun attachHomeToolbar() {
@@ -109,6 +153,11 @@ class MainActivity : AppCompatActivity() {
                     contentInsetStartWithNavigation = 0
                 }
 
+                // Aplica gradiente ao ícone de ajustes (Tune)
+                (customView.findViewById<View>(R.id.btn_tune) as? ImageView)?.let { iv ->
+                    applyPomodoroGradientToImageView(iv)
+                }
+
                 // Clique do botão Tune abre o diálogo de presets
                 customView.findViewById<View>(R.id.btn_tune)?.setOnClickListener {
                     val fm = supportFragmentManager
@@ -151,6 +200,9 @@ class MainActivity : AppCompatActivity() {
                 val logo = customView.findViewById<ImageView>(R.id.img_logo)
                 brandText.text = title
                 logo.setImageResource(iconRes)
+
+                // Aplica gradiente ao ícone da esquerda (logo usado como ícone da tela)
+                logo.post { applyPomodoroGradientToImageView(logo) }
 
                 // Gradiente no título
                 brandText.post {
@@ -205,6 +257,9 @@ class MainActivity : AppCompatActivity() {
                 // Botão de ajustes visível/apagado conforme parâmetro
                 val tune = customView.findViewById<View>(R.id.btn_tune)
                 tune?.visibility = if (showTune) View.VISIBLE else View.GONE
+                if (showTune) {
+                    (tune as? ImageView)?.post { applyPomodoroGradientToImageView(tune) }
+                }
             }
         }
 

@@ -31,6 +31,7 @@
                 android:layout_width="@dimen/avatar_size"
                 android:layout_height="@dimen/avatar_size"
                 android:layout_marginTop="@dimen/spacing_xl"
+                android:src="@drawable/ic_avatar_placeholder"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
