@@ -13,6 +13,10 @@
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <!-- Altura levemente maior da ActionBar/Toolbar -->
         <item name="actionBarSize">64dp</item>
+        <!-- Estilo global para TextInputLayout -->
+        <item name="textInputStyle">@style/Widget.Pomotiva.TextInputLayout.OutlinedBox</item>
+        <!-- Tema dos diálogos Material (padrão) -->
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.MaterialComponents.MaterialAlertDialog</item>
         <!-- Customize your theme here. -->
     </style>
 </resources>

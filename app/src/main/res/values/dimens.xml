@@ -4,4 +4,14 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <!-- Folga extra para afastar conteúdo de toolbar/nav bar em telas com barras maiores -->
     <dimen name="content_inset_extra">32dp</dimen>
+    
+    <!-- Espaçamentos gerais -->
+    <dimen name="spacing_xs">8dp</dimen>
+    <dimen name="spacing_sm">12dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    
+    <!-- Tamanhos de avatar -->
+    <dimen name="avatar_size">96dp</dimen>
 </resources>
