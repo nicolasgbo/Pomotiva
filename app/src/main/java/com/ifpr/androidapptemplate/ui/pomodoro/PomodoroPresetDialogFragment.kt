@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.ifpr.androidapptemplate.R
+import kotlin.math.max
 
 class PomodoroPresetDialogFragment : DialogFragment() {
 
@@ -44,8 +45,8 @@ class PomodoroPresetDialogFragment : DialogFragment() {
         val btnClose = view.findViewById<ImageButton>(R.id.btn_close)
 
         fun updateLabels() {
-            labelFocus.text = getString(R.string.pomodoro_focus_label, seekFocus.progress)
-            labelBreak.text = getString(R.string.pomodoro_break_label, seekBreak.progress)
+            labelFocus.text = getString(R.string.pomodoro_focus_label, max(1, seekFocus.progress))
+            labelBreak.text = getString(R.string.pomodoro_break_label, max(1, seekBreak.progress))
         }
 
         // Helper para selecionar um RadioButton e atualizar UI
@@ -69,15 +70,24 @@ class PomodoroPresetDialogFragment : DialogFragment() {
         rbCustom.setOnClickListener { select(rbCustom) }
 
         seekFocus.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { updateLabels() }
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (progress < 1) seekBar?.progress = 1
+                updateLabels()
+            }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
         seekBreak.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { updateLabels() }
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (progress < 1) seekBar?.progress = 1
+                updateLabels()
+            }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+        // Garante estado inicial mínimo 1
+        if (seekFocus.progress < 1) seekFocus.progress = 1
+        if (seekBreak.progress < 1) seekBreak.progress = 1
         updateLabels()
 
         btnCancel.setOnClickListener { dismiss() }

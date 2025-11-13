@@ -47,6 +47,14 @@ class PomodoroViewModel : ViewModel() {
         _isRunning.value = false
     }
 
+    // Evento simples para notificação (consumido pela UI)
+    private val _notificationEvent = MutableLiveData<String?>()
+    val notificationEvent: LiveData<String?> = _notificationEvent
+
+    fun consumeNotification() {
+        _notificationEvent.value = null
+    }
+
     // Seleciona modo sem iniciar o timer
     fun selectWork() = setMode(State.WORK, workDurationMs)
 
@@ -91,14 +99,18 @@ class PomodoroViewModel : ViewModel() {
             State.WORK -> {
                 val nextCycle = (_cycleCount.value ?: 0) + 1
                 _cycleCount.postValue(nextCycle)
+                // Notifica término do foco e seleciona pausa (não inicia automaticamente)
+                _notificationEvent.postValue("Tempo de foco completo!")
                 if (nextCycle % LONG_BREAK_INTERVAL == 0) {
-                    startLongBreak()
+                    selectLongBreak()
                 } else {
-                    startShortBreak()
+                    selectShortBreak()
                 }
             }
             State.SHORT_BREAK, State.LONG_BREAK -> {
-                startWork()
+                // Notifica término da pausa e seleciona foco (não inicia automaticamente)
+                _notificationEvent.postValue("Pausa finalizada! Volte ao foco!")
+                selectWork()
             }
             else -> { /* no-op */ }
         }

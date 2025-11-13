@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AndroidAppTemplate</string>
+    <string name="app_name">Pomotiva</string>
     <string name="title_home">Pomo</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_estatistica">Estatística</string>
