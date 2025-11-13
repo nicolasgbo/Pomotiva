@@ -4,6 +4,8 @@ import android.os.CountDownTimer
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class PomodoroViewModel : ViewModel() {
 
@@ -36,6 +38,9 @@ class PomodoroViewModel : ViewModel() {
     private var currentDuration = workDurationMs
     private var timer: CountDownTimer? = null
     private var lastActiveState: State = State.WORK
+
+    // Realtime Database integration
+    private val repository = PomodoroRepository()
 
     private fun setMode(state: State, durationMs: Long) {
         cancelTimer()
@@ -95,12 +100,21 @@ class PomodoroViewModel : ViewModel() {
     }
 
     private fun onTimerFinished() {
-        when (_state.value) {
+        val finishedState = _state.value
+        val duration = _totalMillis.value ?: currentDuration
+        val endAt = System.currentTimeMillis()
+        val startAt = endAt - duration
+        when (finishedState) {
             State.WORK -> {
                 val nextCycle = (_cycleCount.value ?: 0) + 1
                 _cycleCount.postValue(nextCycle)
                 // Notifica término do foco e seleciona pausa (não inicia automaticamente)
                 _notificationEvent.postValue("Tempo de foco completo!")
+                // Persistência: incrementa stats e registra sessão
+                viewModelScope.launch {
+                    repository.incrementDailyStats(onWork = true, durationMs = duration)
+                    repository.logSession(type = "WORK", durationMs = duration, startAt = startAt, endAt = endAt)
+                }
                 if (nextCycle % LONG_BREAK_INTERVAL == 0) {
                     selectLongBreak()
                 } else {
@@ -110,6 +124,12 @@ class PomodoroViewModel : ViewModel() {
             State.SHORT_BREAK, State.LONG_BREAK -> {
                 // Notifica término da pausa e seleciona foco (não inicia automaticamente)
                 _notificationEvent.postValue("Pausa finalizada! Volte ao foco!")
+                // Persistência: incrementa stats de pausa e registra sessão
+                viewModelScope.launch {
+                    repository.incrementDailyStats(onWork = false, durationMs = duration)
+                    val type = if (finishedState == State.SHORT_BREAK) "SHORT_BREAK" else "LONG_BREAK"
+                    repository.logSession(type = type, durationMs = duration, startAt = startAt, endAt = endAt)
+                }
                 selectWork()
             }
             else -> { /* no-op */ }
@@ -272,5 +292,14 @@ class PomodoroViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         cancelTimer()
+    }
+
+    init {
+        // Carrega presets do usuário e aplica no temporizador
+        viewModelScope.launch {
+            repository.presetsFlow().collect { p ->
+                setDurations(p.workMin, p.shortBreakMin, p.longBreakMin)
+            }
+        }
     }
 }

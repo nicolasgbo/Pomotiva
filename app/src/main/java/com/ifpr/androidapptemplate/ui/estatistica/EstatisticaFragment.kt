@@ -17,6 +17,17 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.ifpr.androidapptemplate.R
+import androidx.lifecycle.lifecycleScope
+import com.ifpr.androidapptemplate.ui.pomodoro.DailyStats
+import com.ifpr.androidapptemplate.ui.pomodoro.Goals
+import com.ifpr.androidapptemplate.ui.pomodoro.PomodoroRepository
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class EstatisticaFragment : Fragment() {
 
@@ -25,6 +36,15 @@ class EstatisticaFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+
+    private val repository = PomodoroRepository()
+    private var statsJob: Job? = null
+    private var goalsJob: Job? = null
+    private var currentPeriodDays: Int = 1
+    private var lastDailyMap: Map<String, DailyStats> = emptyMap()
+    private var lastGoals: Goals = Goals()
+    private var lastTodayCycles: Long = 0L
+    private var periodTarget: Long = 0L
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,10 +67,9 @@ class EstatisticaFragment : Fragment() {
             insets
         }
 
-        setupChipsDefault()
-        setupKpisMock()
-        setupMetasMock()
-        setupBarChartMock(period = Period.HOJE)
+        setupChips()
+        observeGoals()
+        observeAndRender(periodDays = 1)
 
         return root
     }
@@ -60,79 +79,151 @@ class EstatisticaFragment : Fragment() {
         _binding = null
     }
 
-    private enum class Period { HOJE, SEMANA, MES, ANO }
+    private enum class Period(val days: Int) { HOJE(1), SEMANA(7), MES(30), ANO(365) }
 
-    private fun setupChipsDefault() {
-        // Seleciona Hoje por padrão
+    private fun setupChips() {
         binding.chipHoje.isChecked = true
-
-        binding.chipHoje.setOnClickListener { setupBarChartMock(Period.HOJE) }
-        binding.chipSemana.setOnClickListener { setupBarChartMock(Period.SEMANA) }
-        binding.chipMes.setOnClickListener { setupBarChartMock(Period.MES) }
-        binding.chipAno.setOnClickListener { setupBarChartMock(Period.ANO) }
+        binding.chipHoje.setOnClickListener { observeAndRender(Period.HOJE.days) }
+        binding.chipSemana.setOnClickListener { observeAndRender(Period.SEMANA.days) }
+        binding.chipMes.setOnClickListener { observeAndRender(Period.MES.days) }
+        binding.chipAno.setOnClickListener { observeAndRender(Period.ANO.days) }
     }
 
-    private fun setupKpisMock() {
-        binding.tvKpiTempoValor.text = "320 min"
-        binding.tvKpiSessoesValor.text = "6"
-        binding.tvKpiTaxaValor.text = "85%"
+    private fun observeAndRender(periodDays: Int) {
+        statsJob?.cancel()
+        statsJob = viewLifecycleOwner.lifecycleScope.launch {
+            currentPeriodDays = periodDays
+            repositoryDailyRange(periodDays).collectLatest { map ->
+                lastDailyMap = map
+                renderKpis(map)
+                renderMetaCards(map)
+                renderChart(map)
+                renderMeta2ProgressIfPossible()
+            }
+        }
+        // Atualiza o target do período ao trocar o chip
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val prefix = periodPrefix(currentPeriodDays)
+                if (prefix != null) {
+                    val pd = repository.fetchPeriod(prefix)
+                    periodTarget = pd.cycles_target
+                    renderMeta2ProgressIfPossible()
+                }
+            } catch (_: Exception) { }
+        }
     }
 
-    private fun setupMetasMock() {
-        // Meta 1: 480/600 min => 80%
-        binding.tvMeta1Titulo.text = "Tempo focado semanal"
-        binding.tvMeta1Valores.text = "480/600 min  •  Falta 120 min"
-        binding.progressMeta1.max = 100
-        binding.progressMeta1.setProgressCompat(80, true)
+    private fun repositoryDailyRange(days: Int) = repositoryDailyRangeImpl(days)
 
-        // Meta 2: 22/30 sessões => ~73%
-        binding.tvMeta2Titulo.text = "Sessões por mês"
-        binding.tvMeta2Valores.text = "22/30 sessões  •  Falta 8"
+    private fun repositoryDailyRangeImpl(days: Int) = kotlinx.coroutines.flow.callbackFlow<Map<String, DailyStats>> {
+        val u = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+        if (u == null) {
+            trySend(emptyMap()); close(); return@callbackFlow
+        }
+        val ref = com.google.firebase.database.FirebaseDatabase.getInstance()
+            .reference.child("users").child(u).child("pomodoro").child("stats").child("daily")
+            .orderByKey()
+            .limitToLast(days)
+        val listener = object : com.google.firebase.database.ValueEventListener {
+            override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
+                val map = mutableMapOf<String, DailyStats>()
+                for (child in snapshot.children) {
+                    val key = child.key ?: continue
+                    val s = child.getValue(DailyStats::class.java) ?: DailyStats()
+                    map[key] = s
+                }
+                trySend(map.toSortedMap())
+            }
+            override fun onCancelled(error: com.google.firebase.database.DatabaseError) { }
+        }
+        val dbref = (ref as com.google.firebase.database.Query)
+        dbref.addValueEventListener(listener)
+        awaitClose { dbref.removeEventListener(listener) }
+    }
+
+    private fun renderKpis(dailyMap: Map<String, DailyStats>) {
+        val todayKey = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val today = dailyMap[todayKey] ?: DailyStats()
+        val focusMin = (today.focus_ms / 60000L).toInt()
+        binding.tvKpiTempoValor.text = "$focusMin min"
+        binding.tvKpiSessoesValor.text = today.cycles.toString()
+        val totalMs = today.focus_ms + today.break_ms
+        val taxa = if (totalMs > 0) (today.focus_ms.toDouble() / totalMs.toDouble() * 100.0) else 0.0
+        binding.tvKpiTaxaValor.text = String.format(Locale.getDefault(), "%.0f%%", taxa)
+    }
+
+    private fun renderMetaCards(dailyMap: Map<String, DailyStats>) {
+        // Soma do período atual
+        val totalFocusMin = (dailyMap.values.sumOf { it.focus_ms } / 60000L).toInt()
+        val totalCycles = dailyMap.values.sumOf { it.cycles }.toInt()
+
+        // Meta 1: apenas quantidade de minutos focados no período (sem comparação)
+        binding.tvMeta1Titulo.text = "Tempo focado ${periodLabel(currentPeriodDays)}"
+        binding.tvMeta1Valores.text = "$totalFocusMin min"
+        binding.progressMeta1.apply {
+            visibility = View.VISIBLE
+            isIndeterminate = false
+            max = 100
+            setProgressCompat(100, false)
+        }
+
+        // Meta 2 permanece vinculada às metas. Texto exibe total do período.
+        binding.tvMeta2Titulo.text = "Sessões ${periodLabel(currentPeriodDays)}"
+        binding.tvMeta2Valores.text = "$totalCycles sessões"
+    }
+
+    private fun observeGoals() {
+        goalsJob?.cancel()
+        goalsJob = viewLifecycleOwner.lifecycleScope.launch {
+            repository.dailyStatsTodayFlow().collectLatest { today ->
+                lastTodayCycles = today.cycles
+                renderMeta2ProgressIfPossible()
+            }
+        }
+    }
+
+    private fun renderMeta2ProgressIfPossible() {
+        // X: ciclos de hoje (sem somar entre dias)
+        val totalCyclesToday = lastTodayCycles
+        // Y: meta específica do período selecionado (sem multiplicar por dias)
+        val target = periodTarget
+        // Atualiza texto X/Y (exibe 0 se não houver meta definida)
+        binding.tvMeta2Valores.text = "$totalCyclesToday/$target sessões"
+        // Atualiza progresso percentual com guarda contra zero
+        val denom = if (target > 0L) target else 1L
+        val pct = (((totalCyclesToday * 100L) / denom).toInt()).coerceIn(0, 100)
         binding.progressMeta2.max = 100
-        binding.progressMeta2.setProgressCompat(73, true)
+        binding.progressMeta2.setProgressCompat(pct, true)
     }
 
-    private fun setupBarChartMock(period: Period) {
+    private fun periodPrefix(days: Int): String? = when (days) {
+        1 -> "daily"
+        7 -> "weekly"
+        30 -> "monthly"
+        365 -> "yearly"
+        else -> null
+    }
+
+    private fun periodLabel(days: Int): String = when (days) {
+        1 -> "diário"
+        7 -> "semanal"
+        30 -> "mensal"
+        365 -> "anual"
+        else -> "no período"
+    }
+
+    private fun renderChart(dailyMap: Map<String, DailyStats>) {
         val chart = binding.chartPrincipal
-
-        // Dados mock por período
-        val (entries, labels) = when (period) {
-            Period.HOJE -> {
-                // Horas do dia (amostragem 0..23 com alguns valores)
-                val hrs = listOf(8, 9, 10, 11, 14, 15, 16, 20)
-                val vals = listOf(25f, 30f, 20f, 15f, 40f, 35f, 30f, 20f)
-                val e = hrs.mapIndexed { i, h -> BarEntry(i.toFloat(), vals[i]) }
-                val l = hrs.map { String.format("%02dh", it) }
-                e to l
-            }
-            Period.SEMANA -> {
-                val vals = listOf(45f, 60f, 30f, 50f, 70f, 80f, 40f)
-                val e = vals.mapIndexed { i, v -> BarEntry(i.toFloat(), v) }
-                val l = listOf("S", "T", "Q", "Q", "S", "S", "D")
-                e to l
-            }
-            Period.MES -> {
-                // Agrupa por 5 dias para melhorar a legibilidade (resulta em 6 barras: 1-5, 6-10, ..., 26-30)
-                val dailyVals = List(30) { (20..80).random().toFloat() }
-                val bucketSize = 5
-                val chunks = dailyVals.chunked(bucketSize)
-
-                val e = chunks.mapIndexed { i, chunk ->
-                    BarEntry(i.toFloat(), chunk.sum())
-                }
-                val l = chunks.mapIndexed { i, _ ->
-                    val start = i * bucketSize + 1
-                    val end = minOf((i + 1) * bucketSize, dailyVals.size)
-                    "$start-$end"
-                }
-                e to l
-            }
-            Period.ANO -> {
-                val vals = listOf(120f, 130f, 150f, 160f, 170f, 140f, 150f, 180f, 190f, 175f, 160f, 155f)
-                val e = vals.mapIndexed { i, v -> BarEntry(i.toFloat(), v) }
-                val l = listOf("JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ")
-                e to l
-            }
+        val keys = dailyMap.keys.toList()
+        val labels = keys.map { key ->
+            val sdfIn = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val sdfOut = SimpleDateFormat("dd/MM", Locale.getDefault())
+            try { sdfOut.format(sdfIn.parse(key) ?: Date()) } catch (_: Exception) { key }
+        }
+        val entries = keys.mapIndexed { i, k ->
+            val s = dailyMap[k] ?: DailyStats()
+            BarEntry(i.toFloat(), (s.focus_ms / 60000f))
         }
 
         val dataSet = BarDataSet(entries, getString(R.string.estat_chart_title)).apply {
@@ -140,9 +231,7 @@ class EstatisticaFragment : Fragment() {
             valueTextColor = ContextCompat.getColor(requireContext(), R.color.black)
             valueTextSize = 10f
         }
-        val data = BarData(dataSet).apply {
-            barWidth = 0.5f
-        }
+        val data = BarData(dataSet).apply { barWidth = 0.5f }
 
         chart.apply {
             description.isEnabled = false
@@ -172,4 +261,4 @@ class EstatisticaFragment : Fragment() {
             invalidate()
         }
     }
-}
+}

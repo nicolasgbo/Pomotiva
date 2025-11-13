@@ -10,6 +10,7 @@ import com.ifpr.androidapptemplate.databinding.FragmentHomeBinding
 import com.ifpr.androidapptemplate.ui.pomodoro.PomodoroViewModel
 import androidx.core.content.ContextCompat
 import com.ifpr.androidapptemplate.R
+import androidx.lifecycle.lifecycleScope
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -32,6 +33,9 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.workDataOf
 import com.ifpr.androidapptemplate.ui.pomodoro.EndSessionNotificationWorker
+import com.ifpr.androidapptemplate.ui.pomodoro.PomodoroRepository
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
@@ -41,6 +45,7 @@ class HomeFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
     private val pomodoroViewModel: PomodoroViewModel by activityViewModels()
+    private val repository = PomodoroRepository()
 
     private val channelId = "pomotiva_pomodoro"
     private val notificationId = 1001
@@ -62,6 +67,12 @@ class HomeFragment : Fragment() {
         setupClicks()
         ensureNotificationChannel()
         ensureNotificationPermission()
+        // Observa ciclos diários do dia diretamente do banco e atualiza o rótulo
+        viewLifecycleOwner.lifecycleScope.launch {
+            repository.dailyStatsTodayFlow().collectLatest { today ->
+                binding.textDailyCycles.text = "Ciclos diários: ${today.cycles}"
+            }
+        }
         return root
     }
 

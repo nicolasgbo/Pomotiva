@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.ifpr.androidapptemplate.databinding.FragmentMetasBinding
 import android.widget.Toast
 import android.widget.LinearLayout
@@ -29,6 +31,13 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import java.util.Calendar
 import java.util.Locale
 import com.ifpr.androidapptemplate.ui.metas.MetasViewModel
+import com.ifpr.androidapptemplate.ui.pomodoro.Goals
+import com.ifpr.androidapptemplate.ui.pomodoro.PomodoroRepository
+import com.ifpr.androidapptemplate.ui.pomodoro.GoalsUiHelper
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.Lifecycle
 
 class MetasFragment : Fragment() {
 
@@ -41,19 +50,159 @@ class MetasFragment : Fragment() {
     private val tempMonthlyTasks = mutableListOf<String>()
     private val tempYearlyTasks = mutableListOf<String>()
 
+    // Listas atuais carregadas do BD para reabrir formulário com dados existentes
+    private val currentDailyTasks = mutableListOf<String>()
+    private val currentWeeklyTasks = mutableListOf<String>()
+    private val currentMonthlyTasks = mutableListOf<String>()
+    private val currentYearlyTasks = mutableListOf<String>()
+    // Chaves dos itens no Realtime DB para exclusão precisa
+    private val currentDailyTaskKeys = mutableListOf<String>()
+    private val currentWeeklyTaskKeys = mutableListOf<String>()
+    private val currentMonthlyTaskKeys = mutableListOf<String>()
+    private val currentYearlyTaskKeys = mutableListOf<String>()
+
+    // Integração com metas no Realtime Database
+    private lateinit var repository: PomodoroRepository
+    private var currentGoals: Goals = Goals()
+    private val goalsUiHelper = GoalsUiHelper
+
+    // Flags para evitar fechar o formulário enquanto o usuário edita
+    private var isEditingDaily = false
+    private var isEditingWeekly = false
+    private var isEditingMonthly = false
+    private var isEditingYearly = false
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         val metasViewModel =
-            ViewModelProvider(this).get(MetasViewModel::class.java)
+            ViewModelProvider(this, MetasViewModel.factory()).get(MetasViewModel::class.java)
 
         _binding = FragmentMetasBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        // Ajuste dinâmico de padding inferior para evitar sobreposição pela BottomNavigation
-        root.post {
+        // Repo via ViewModel (DI simples)
+        repository = metasViewModel.repository
+
+        // Carrega metas existentes do usuário e preenche UI respeitando ciclo de vida
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                repository.goalsFlow().collectLatest { goals ->
+                    currentGoals = goals
+                    if (!isEditingDaily) {
+                        if (goals.daily_cycles_target > 0) {
+                            binding.inputDailyCycles.setText(goals.daily_cycles_target.toString())
+                        } else {
+                            binding.inputDailyCycles.setText("")
+                        }
+                    }
+                    if (goals.daily_cycles_target > 0) {
+                        binding.summaryDailyCycles.text = buildCyclesSpannable(goals.daily_cycles_target.toInt())
+                        if (!isEditingDaily) {
+                            binding.summaryDailyCard.isVisible = true
+                            binding.formDailyContainer.isGone = true
+                            binding.btnAddDaily.apply {
+                                text = "Editar meta"
+                                setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Pré-carrega resumos por período (sequencial para reduzir leituras paralelas)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val p = repository.fetchPeriod("daily")
+                if (!isEditingDaily) {
+                    val has = (p.cycles_target > 0L) || (p.created_at > 0L)
+                    binding.summaryDailyTasksList.removeAllViews()
+                    currentDailyTasks.clear(); currentDailyTasks.addAll(p.tasks.values)
+                    currentDailyTaskKeys.clear(); currentDailyTaskKeys.addAll(p.tasks.keys)
+                    if (p.tasks.isEmpty()) addSummaryRow(binding.summaryDailyTasksList, "(Sem tarefas)") else p.tasks.values.forEach { addSummaryRow(binding.summaryDailyTasksList, it) }
+                    if (has) {
+                        val fmt = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+                        if (p.created_at > 0L) binding.summaryDailyDate.text = buildBoldLabel("Data de criação: ", fmt.format(java.util.Date(p.created_at)))
+                        if (p.cycles_target > 0L) binding.summaryDailyCycles.text = buildCyclesSpannable(p.cycles_target.toInt()) else binding.summaryDailyCycles.text = ""
+                        binding.summaryDailyCard.isVisible = true
+                        binding.formDailyContainer.isGone = true
+                        binding.btnAddDaily.apply { text = "Editar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24) }
+                    } else {
+                        binding.summaryDailyCard.isGone = true
+                        binding.btnAddDaily.apply { text = "Adicionar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24) }
+                    }
+                }
+            } catch (_: Exception) { }
+
+            try {
+                val p = repository.fetchPeriod("weekly")
+                if (!isEditingWeekly) {
+                    val has = (p.cycles_target > 0L) || (p.created_at > 0L)
+                    binding.summaryWeeklyTasksList.removeAllViews()
+                    currentWeeklyTasks.clear(); currentWeeklyTasks.addAll(p.tasks.values)
+                    currentWeeklyTaskKeys.clear(); currentWeeklyTaskKeys.addAll(p.tasks.keys)
+                    if (p.tasks.isEmpty()) addSummaryRow(binding.summaryWeeklyTasksList, "(Sem tarefas)") else p.tasks.values.forEach { addSummaryRow(binding.summaryWeeklyTasksList, it) }
+                    if (has) {
+                        val fmt = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+                        if (p.created_at > 0L) binding.summaryWeeklyDate.text = buildBoldLabel("Data de criação: ", fmt.format(java.util.Date(p.created_at)))
+                        if (p.cycles_target > 0L) binding.summaryWeeklyCycles.text = buildCyclesSpannable(p.cycles_target.toInt()) else binding.summaryWeeklyCycles.text = ""
+                        binding.summaryWeeklyCard.isVisible = true
+                        binding.formWeeklyContainer.isGone = true
+                        binding.btnAddWeekly.apply { text = "Editar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24) }
+                    } else {
+                        binding.summaryWeeklyCard.isGone = true
+                        binding.btnAddWeekly.apply { text = "Adicionar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24) }
+                    }
+                }
+            } catch (_: Exception) { }
+
+            try {
+                val p = repository.fetchPeriod("monthly")
+                if (!isEditingMonthly) {
+                    val has = (p.cycles_target > 0L) || (p.created_at > 0L)
+                    binding.summaryMonthlyTasksList.removeAllViews()
+                    currentMonthlyTasks.clear(); currentMonthlyTasks.addAll(p.tasks.values)
+                    currentMonthlyTaskKeys.clear(); currentMonthlyTaskKeys.addAll(p.tasks.keys)
+                    if (p.tasks.isEmpty()) addSummaryRow(binding.summaryMonthlyTasksList, "(Sem tarefas)") else p.tasks.values.forEach { addSummaryRow(binding.summaryMonthlyTasksList, it) }
+                    if (has) {
+                        val fmt = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+                        if (p.created_at > 0L) binding.summaryMonthlyDate.text = buildBoldLabel("Data de criação: ", fmt.format(java.util.Date(p.created_at)))
+                        if (p.cycles_target > 0L) binding.summaryMonthlyCycles.text = buildCyclesSpannable(p.cycles_target.toInt()) else binding.summaryMonthlyCycles.text = ""
+                        binding.summaryMonthlyCard.isVisible = true
+                        binding.formMonthlyContainer.isGone = true
+                        binding.btnAddMonthly.apply { text = "Editar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24) }
+                    } else {
+                        binding.summaryMonthlyCard.isGone = true
+                        binding.btnAddMonthly.apply { text = "Adicionar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24) }
+                    }
+                }
+            } catch (_: Exception) { }
+
+            try {
+                val p = repository.fetchPeriod("yearly")
+                if (!isEditingYearly) {
+                    val has = (p.cycles_target > 0L) || (p.created_at > 0L)
+                    binding.summaryYearlyTasksList.removeAllViews()
+                    currentYearlyTasks.clear(); currentYearlyTasks.addAll(p.tasks.values)
+                    currentYearlyTaskKeys.clear(); currentYearlyTaskKeys.addAll(p.tasks.keys)
+                    if (p.tasks.isEmpty()) addSummaryRow(binding.summaryYearlyTasksList, "(Sem tarefas)") else p.tasks.values.forEach { addSummaryRow(binding.summaryYearlyTasksList, it) }
+                    if (has) {
+                        val fmt = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+                        if (p.created_at > 0L) binding.summaryYearlyDate.text = buildBoldLabel("Data de criação: ", fmt.format(java.util.Date(p.created_at)))
+                        if (p.cycles_target > 0L) binding.summaryYearlyCycles.text = buildCyclesSpannable(p.cycles_target.toInt()) else binding.summaryYearlyCycles.text = ""
+                        binding.summaryYearlyCard.isVisible = true
+                        binding.formYearlyContainer.isGone = true
+                        binding.btnAddYearly.apply { text = "Editar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24) }
+                    } else {
+                        binding.summaryYearlyCard.isGone = true
+                        binding.btnAddYearly.apply { text = "Adicionar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24) }
+                    }
+                }
+            } catch (_: Exception) { }
+
             val nav = activity?.findViewById<BottomNavigationView>(com.ifpr.androidapptemplate.R.id.nav_view)
             val shadow = activity?.findViewById<View>(com.ifpr.androidapptemplate.R.id.bottom_nav_top_shadow)
             val extra = dp(8)
@@ -91,10 +240,36 @@ class MetasFragment : Fragment() {
             if (binding.summaryDailyCard.isVisible) {
                 binding.summaryDailyCard.isGone = true
             }
-            form.isVisible = !form.isVisible
+            // Preenche o formulário com as tarefas já salvas
+            if (!form.isVisible) {
+                val u = FirebaseAuth.getInstance().currentUser
+                if (u == null) {
+                    Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val period = repository.fetchPeriod("daily")
+                        goalsUiHelper.onPrefill(period) { tasks ->
+                            tempDailyTasks.clear()
+                            tempDailyTasks.addAll(tasks)
+                            currentDailyTasks.clear()
+                            currentDailyTasks.addAll(tasks)
+                            currentDailyTaskKeys.clear()
+                            currentDailyTaskKeys.addAll(period.tasks.keys)
+                            rebuildDailyTaskList()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Falha ao carregar metas", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            // Mantém o formulário aberto (não fecha ao re-clicar)
+            form.isVisible = true
+            isEditingDaily = true
         }
 
-        // Adicionar tarefa diária à lista temporária e à UI
+        // Adicionar tarefa diária à lista temporária e à UI (persistindo individualmente via repository)
         binding.btnAddDailyTask.setOnClickListener {
             val text = binding.inputDailyTask.text?.toString()?.trim().orEmpty()
             if (text.isEmpty()) {
@@ -103,9 +278,25 @@ class MetasFragment : Fragment() {
             }
             addDailyTask(text)
             binding.inputDailyTask.setText("")
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingDaily = true
+                try {
+                    val key = repository.addTask("daily", text)
+                    if (key != null) {
+                        currentDailyTasks.add(text)
+                        currentDailyTaskKeys.add(key)
+                    } else {
+                        Toast.makeText(requireContext(), "Falha ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingDaily = false
+                }
+            }
         }
 
-        // Salvar meta diária e mostrar resumo
+        // Salvar meta diária e mostrar resumo (usar repository.setCycles e ensureCreatedAt)
         binding.btnSaveDaily.setOnClickListener {
             val cyclesStr = binding.inputDailyCycles.text?.toString()?.trim().orEmpty()
             val cycles = cyclesStr.toIntOrNull()
@@ -139,6 +330,22 @@ class MetasFragment : Fragment() {
 
             // Opcional: feedback
             Toast.makeText(requireContext(), "Meta diária salva", Toast.LENGTH_SHORT).show()
+            if (tempDailyTasks.isEmpty()) {
+                Toast.makeText(requireContext(), "Sem tarefas!", Toast.LENGTH_SHORT).show()
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingDaily = true
+                try {
+                    repository.setCycles("daily", cycles.toLong())
+                    repository.ensureCreatedAt("daily")
+                    currentGoals = currentGoals.copy(daily_cycles_target = cycles.toLong())
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao salvar meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingDaily = false
+                }
+            }
         }
 
         // Cancelar edição da meta diária (fecha o formulário sem salvar)
@@ -161,20 +368,68 @@ class MetasFragment : Fragment() {
                 text = "Adicionar meta"
                 setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24)
             }
+
+            // Excluir meta diária no DB (ciclos, created_at e tasks) via repository
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingDaily = true
+                try {
+                    repository.deletePeriod("daily")
+                    currentDailyTasks.clear(); currentDailyTaskKeys.clear()
+                    binding.summaryDailyCard.isGone = true
+                    binding.formDailyContainer.isGone = true
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao excluir meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingDaily = false
+                }
+            }
         }
         // --------- Semanal ---------
         binding.btnAddWeekly.setOnClickListener {
             val form = binding.formWeeklyContainer
             if (binding.summaryWeeklyCard.isVisible) binding.summaryWeeklyCard.isGone = true
-            form.isVisible = !form.isVisible
+            if (!form.isVisible) {
+                val u = FirebaseAuth.getInstance().currentUser
+                if (u == null) {
+                    Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show(); return@setOnClickListener
+                }
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val period = repository.fetchPeriod("weekly")
+                        tempWeeklyTasks.clear()
+                        tempWeeklyTasks.addAll(period.tasks.values)
+                        currentWeeklyTasks.clear(); currentWeeklyTasks.addAll(period.tasks.values)
+                        currentWeeklyTaskKeys.clear(); currentWeeklyTaskKeys.addAll(period.tasks.keys)
+                        rebuildWeeklyTaskList()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Falha ao carregar metas", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            // Mantém o formulário aberto
+            form.isVisible = true
+            isEditingWeekly = true
         }
         binding.btnAddWeeklyTask.setOnClickListener {
             val text = binding.inputWeeklyTask.text?.toString()?.trim().orEmpty()
-            if (text.isEmpty()) {
-                Toast.makeText(requireContext(), "Digite uma tarefa semanal", Toast.LENGTH_SHORT).show(); return@setOnClickListener
+            if (text.isEmpty()) { Toast.makeText(requireContext(), "Digite uma tarefa semanal", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            addWeeklyTask(text); binding.inputWeeklyTask.setText("")
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingWeekly = true
+                try {
+                    val key = repository.addTask("weekly", text)
+                    if (key != null) {
+                        currentWeeklyTasks.add(text)
+                        currentWeeklyTaskKeys.add(key)
+                    } else {
+                        Toast.makeText(requireContext(), "Falha ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingWeekly = false
+                }
             }
-            addWeeklyTask(text)
-            binding.inputWeeklyTask.setText("")
         }
         binding.btnSaveWeekly.setOnClickListener {
             val cycles = binding.inputWeeklyCycles.text?.toString()?.trim().orEmpty().toIntOrNull()
@@ -188,24 +443,84 @@ class MetasFragment : Fragment() {
             binding.summaryWeeklyCard.isVisible = true
             binding.btnAddWeekly.apply { text = "Editar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24) }
             Toast.makeText(requireContext(), "Meta semanal salva", Toast.LENGTH_SHORT).show()
+            if (tempWeeklyTasks.isEmpty()) { Toast.makeText(requireContext(), "Sem tarefas!", Toast.LENGTH_SHORT).show() }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingWeekly = true
+                try {
+                    repository.setCycles("weekly", cycles.toLong())
+                    repository.ensureCreatedAt("weekly")
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao salvar meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingWeekly = false
+                }
+            }
         }
         binding.btnCancelWeekly.setOnClickListener {
             tempWeeklyTasks.clear(); binding.weeklyTasksList.removeAllViews(); binding.weeklyTasksHeader.isVisible = false
             binding.inputWeeklyCycles.setText(""); binding.inputWeeklyTask.setText("")
             binding.summaryWeeklyCard.isGone = true; binding.formWeeklyContainer.isGone = true
             binding.btnAddWeekly.apply { text = "Adicionar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24) }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingWeekly = true
+                try {
+                    repository.deletePeriod("weekly")
+                    currentWeeklyTasks.clear(); currentWeeklyTaskKeys.clear()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao excluir meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingWeekly = false
+                }
+            }
         }
 
         // --------- Mensal ---------
         binding.btnAddMonthly.setOnClickListener {
             val form = binding.formMonthlyContainer
             if (binding.summaryMonthlyCard.isVisible) binding.summaryMonthlyCard.isGone = true
-            form.isVisible = !form.isVisible
+            if (!form.isVisible) {
+                val u = FirebaseAuth.getInstance().currentUser
+                if (u == null) {
+                    Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show(); return@setOnClickListener
+                }
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val period = repository.fetchPeriod("monthly")
+                        tempMonthlyTasks.clear(); tempMonthlyTasks.addAll(period.tasks.values)
+                        currentMonthlyTasks.clear(); currentMonthlyTasks.addAll(period.tasks.values)
+                        currentMonthlyTaskKeys.clear(); currentMonthlyTaskKeys.addAll(period.tasks.keys)
+                        rebuildMonthlyTaskList()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Falha ao carregar metas", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            // Mantém o formulário aberto
+            form.isVisible = true
+            isEditingMonthly = true
         }
         binding.btnAddMonthlyTask.setOnClickListener {
             val text = binding.inputMonthlyTask.text?.toString()?.trim().orEmpty()
             if (text.isEmpty()) { Toast.makeText(requireContext(), "Digite uma tarefa mensal", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
             addMonthlyTask(text); binding.inputMonthlyTask.setText("")
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingMonthly = true
+                try {
+                    val key = repository.addTask("monthly", text)
+                    if (key != null) {
+                        currentMonthlyTasks.add(text)
+                        currentMonthlyTaskKeys.add(key)
+                    } else {
+                        Toast.makeText(requireContext(), "Falha ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingMonthly = false
+                }
+            }
         }
         binding.btnSaveMonthly.setOnClickListener {
             val cycles = binding.inputMonthlyCycles.text?.toString()?.trim().orEmpty().toIntOrNull()
@@ -218,24 +533,84 @@ class MetasFragment : Fragment() {
             binding.formMonthlyContainer.isGone = true; binding.summaryMonthlyCard.isVisible = true
             binding.btnAddMonthly.apply { text = "Editar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24) }
             Toast.makeText(requireContext(), "Meta mensal salva", Toast.LENGTH_SHORT).show()
+            if (tempMonthlyTasks.isEmpty()) {
+                Toast.makeText(requireContext(), "Sem tarefas!", Toast.LENGTH_SHORT).show()
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingMonthly = true
+                try {
+                    repository.setCycles("monthly", cycles.toLong())
+                    repository.ensureCreatedAt("monthly")
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao salvar meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingMonthly = false
+                }
+            }
         }
         binding.btnCancelMonthly.setOnClickListener {
             tempMonthlyTasks.clear(); binding.monthlyTasksList.removeAllViews(); binding.monthlyTasksHeader.isVisible = false
             binding.inputMonthlyCycles.setText(""); binding.inputMonthlyTask.setText("")
             binding.summaryMonthlyCard.isGone = true; binding.formMonthlyContainer.isGone = true
             binding.btnAddMonthly.apply { text = "Adicionar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24) }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingMonthly = true
+                try {
+                    repository.deletePeriod("monthly")
+                    currentMonthlyTasks.clear(); currentMonthlyTaskKeys.clear()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao excluir meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingMonthly = false
+                }
+            }
         }
 
         // --------- Anual ---------
         binding.btnAddYearly.setOnClickListener {
             val form = binding.formYearlyContainer
             if (binding.summaryYearlyCard.isVisible) binding.summaryYearlyCard.isGone = true
-            form.isVisible = !form.isVisible
+            if (!form.isVisible) {
+                val u = FirebaseAuth.getInstance().currentUser
+                if (u == null) { Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val period = repository.fetchPeriod("yearly")
+                        tempYearlyTasks.clear(); tempYearlyTasks.addAll(period.tasks.values)
+                        currentYearlyTasks.clear(); currentYearlyTasks.addAll(period.tasks.values)
+                        currentYearlyTaskKeys.clear(); currentYearlyTaskKeys.addAll(period.tasks.keys)
+                        rebuildYearlyTaskList()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Falha ao carregar metas", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            // Mantém o formulário aberto
+            form.isVisible = true
+            isEditingYearly = true
         }
         binding.btnAddYearlyTask.setOnClickListener {
             val text = binding.inputYearlyTask.text?.toString()?.trim().orEmpty()
             if (text.isEmpty()) { Toast.makeText(requireContext(), "Digite uma tarefa anual", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
             addYearlyTask(text); binding.inputYearlyTask.setText("")
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingYearly = true
+                try {
+                    val key = repository.addTask("yearly", text)
+                    if (key != null) {
+                        currentYearlyTasks.add(text)
+                        currentYearlyTaskKeys.add(key)
+                    } else {
+                        Toast.makeText(requireContext(), "Falha ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao adicionar tarefa", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingYearly = false
+                }
+            }
         }
         binding.btnSaveYearly.setOnClickListener {
             val cycles = binding.inputYearlyCycles.text?.toString()?.trim().orEmpty().toIntOrNull()
@@ -248,12 +623,39 @@ class MetasFragment : Fragment() {
             binding.formYearlyContainer.isGone = true; binding.summaryYearlyCard.isVisible = true
             binding.btnAddYearly.apply { text = "Editar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_edit_24) }
             Toast.makeText(requireContext(), "Meta anual salva", Toast.LENGTH_SHORT).show()
+            if (tempYearlyTasks.isEmpty()) {
+                Toast.makeText(requireContext(), "Sem tarefas!", Toast.LENGTH_SHORT).show()
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingYearly = true
+                try {
+                    repository.setCycles("yearly", cycles.toLong())
+                    repository.ensureCreatedAt("yearly")
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao salvar meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingYearly = false
+                }
+            }
         }
         binding.btnCancelYearly.setOnClickListener {
             tempYearlyTasks.clear(); binding.yearlyTasksList.removeAllViews(); binding.yearlyTasksHeader.isVisible = false
             binding.inputYearlyCycles.setText(""); binding.inputYearlyTask.setText("")
             binding.summaryYearlyCard.isGone = true; binding.formYearlyContainer.isGone = true
             binding.btnAddYearly.apply { text = "Adicionar meta"; setIconResource(com.ifpr.androidapptemplate.R.drawable.ic_add_24) }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                isEditingYearly = true
+                try {
+                    repository.deletePeriod("yearly")
+                    currentYearlyTasks.clear(); currentYearlyTaskKeys.clear()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Erro ao excluir meta", Toast.LENGTH_SHORT).show()
+                } finally {
+                    isEditingYearly = false
+                }
+            }
         }
 
         return root
@@ -342,6 +744,23 @@ class MetasFragment : Fragment() {
                 if (index in tempDailyTasks.indices) {
                     tempDailyTasks.removeAt(index)
                     rebuildDailyTaskList()
+                    if (index in currentDailyTaskKeys.indices) {
+                        val key = currentDailyTaskKeys[index]
+                        val u = FirebaseAuth.getInstance().currentUser
+                        if (u == null) {
+                            Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                try {
+                                    repository.removeTask("daily", key)
+                                    currentDailyTaskKeys.removeAt(index)
+                                    if (index < currentDailyTasks.size) currentDailyTasks.removeAt(index)
+                                } catch (e: Exception) {
+                                    Toast.makeText(requireContext(), "Erro ao excluir tarefa", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -382,6 +801,23 @@ class MetasFragment : Fragment() {
             if (newText.isNotEmpty()) {
                 tempDailyTasks[index] = newText
                 rebuildDailyTaskList()
+                // Atualiza no Realtime Database
+                val u = FirebaseAuth.getInstance().currentUser
+                if (u == null) {
+                    Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                } else {
+                    if (index in currentDailyTaskKeys.indices) {
+                        val key = currentDailyTaskKeys[index]
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try {
+                                repository.updateTask("daily", key, newText)
+                                if (index < currentDailyTasks.size) currentDailyTasks[index] = newText
+                            } catch (e: Exception) {
+                                Toast.makeText(requireContext(), "Erro ao atualizar tarefa", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
             }
             dialog.dismiss()
         }
@@ -467,6 +903,24 @@ class MetasFragment : Fragment() {
                 if (index in tempWeeklyTasks.indices) {
                     tempWeeklyTasks.removeAt(index)
                     rebuildWeeklyTaskList()
+                    // Remover via repositório
+                    if (index in currentWeeklyTaskKeys.indices) {
+                        val key = currentWeeklyTaskKeys[index]
+                        val u = FirebaseAuth.getInstance().currentUser
+                        if (u == null) {
+                            Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                try {
+                                    repository.removeTask("weekly", key)
+                                    currentWeeklyTaskKeys.removeAt(index)
+                                    if (index < currentWeeklyTasks.size) currentWeeklyTasks.removeAt(index)
+                                } catch (e: Exception) {
+                                    Toast.makeText(requireContext(), "Erro ao excluir tarefa", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -500,6 +954,18 @@ class MetasFragment : Fragment() {
             if (newText.isNotEmpty()) {
                 tempWeeklyTasks[index] = newText
                 rebuildWeeklyTaskList()
+                // Atualiza via repositório
+                if (index in currentWeeklyTaskKeys.indices) {
+                    val key = currentWeeklyTaskKeys[index]
+                    val u = FirebaseAuth.getInstance().currentUser
+                    if (u == null) {
+                        Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try { repository.updateTask("weekly", key, newText) } catch (e: Exception) { Toast.makeText(requireContext(), "Erro ao atualizar tarefa", Toast.LENGTH_SHORT).show() }
+                        }
+                    }
+                }
             }
             dialog.dismiss()
         }
@@ -583,6 +1049,23 @@ class MetasFragment : Fragment() {
                 if (index in tempMonthlyTasks.indices) {
                     tempMonthlyTasks.removeAt(index)
                     rebuildMonthlyTaskList()
+                    if (index in currentMonthlyTaskKeys.indices) {
+                        val key = currentMonthlyTaskKeys[index]
+                        val u = FirebaseAuth.getInstance().currentUser
+                        if (u == null) {
+                            Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                try {
+                                    repository.removeTask("monthly", key)
+                                    currentMonthlyTaskKeys.removeAt(index)
+                                    if (index < currentMonthlyTasks.size) currentMonthlyTasks.removeAt(index)
+                                } catch (e: Exception) {
+                                    Toast.makeText(requireContext(), "Erro ao excluir tarefa", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -616,6 +1099,17 @@ class MetasFragment : Fragment() {
             if (newText.isNotEmpty()) {
                 tempMonthlyTasks[index] = newText
                 rebuildMonthlyTaskList()
+                if (index in currentMonthlyTaskKeys.indices) {
+                    val key = currentMonthlyTaskKeys[index]
+                    val u = FirebaseAuth.getInstance().currentUser
+                    if (u == null) {
+                        Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try { repository.updateTask("monthly", key, newText) } catch (e: Exception) { Toast.makeText(requireContext(), "Erro ao atualizar tarefa", Toast.LENGTH_SHORT).show() }
+                        }
+                    }
+                }
             }
             dialog.dismiss()
         }
@@ -699,6 +1193,23 @@ class MetasFragment : Fragment() {
                 if (index in tempYearlyTasks.indices) {
                     tempYearlyTasks.removeAt(index)
                     rebuildYearlyTaskList()
+                    if (index in currentYearlyTaskKeys.indices) {
+                        val key = currentYearlyTaskKeys[index]
+                        val u = FirebaseAuth.getInstance().currentUser
+                        if (u == null) {
+                            Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                        } else {
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                try {
+                                    repository.removeTask("yearly", key)
+                                    currentYearlyTaskKeys.removeAt(index)
+                                    if (index < currentYearlyTasks.size) currentYearlyTasks.removeAt(index)
+                                } catch (e: Exception) {
+                                    Toast.makeText(requireContext(), "Erro ao excluir tarefa", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -732,6 +1243,17 @@ class MetasFragment : Fragment() {
             if (newText.isNotEmpty()) {
                 tempYearlyTasks[index] = newText
                 rebuildYearlyTaskList()
+                if (index in currentYearlyTaskKeys.indices) {
+                    val key = currentYearlyTaskKeys[index]
+                    val u = FirebaseAuth.getInstance().currentUser
+                    if (u == null) {
+                        Toast.makeText(requireContext(), "Faça login para editar metas", Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            try { repository.updateTask("yearly", key, newText) } catch (e: Exception) { Toast.makeText(requireContext(), "Erro ao atualizar tarefa", Toast.LENGTH_SHORT).show() }
+                        }
+                    }
+                }
             }
             dialog.dismiss()
         }

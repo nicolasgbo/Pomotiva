@@ -9,6 +9,7 @@ import android.widget.Toast
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -21,12 +22,14 @@ import com.google.firebase.database.ValueEventListener
 import com.ifpr.androidapptemplate.R
 import com.ifpr.androidapptemplate.databinding.FragmentPerfilUsuarioBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class PerfilUsuarioFragment : Fragment() {
 
     private var _binding: FragmentPerfilUsuarioBinding? = null
 
-    private lateinit var usersReference: DatabaseReference
+    private var usersReference: DatabaseReference? = null
     private lateinit var auth: FirebaseAuth
 
     // This property is only valid between onCreateView and
@@ -50,8 +53,8 @@ class PerfilUsuarioFragment : Fragment() {
             usersReference = FirebaseDatabase.getInstance().getReference("users")
         } catch (e: Exception) {
             Log.e("DatabaseReference", "Erro ao obter referência para o Firebase DatabaseReference", e)
-            // Trate o erro conforme necessário, por exemplo:
-            Toast.makeText(context, "Erro ao acessar o Firebase DatabaseReference", Toast.LENGTH_SHORT).show()
+            usersReference = null
+            Toast.makeText(context, "Erro ao acessar o Firebase Database", Toast.LENGTH_SHORT).show()
         }
 
         // Acessar currentUser
@@ -93,9 +96,40 @@ class PerfilUsuarioFragment : Fragment() {
         // Acessar currentUser
         val userFirebase = auth.currentUser
         if (userFirebase != null) {
-            originalName = userFirebase.displayName
-            binding.registerNameEditText.setText(originalName)
+            // Tenta preencher a partir do Realtime Database primeiro; se não houver, usa displayName do Auth
             binding.registerEmailEditText.setText(userFirebase.email)
+
+            val uid = userFirebase.uid
+            try {
+                val ref = usersReference
+                if (ref == null) {
+                    // Fallback para displayName do Auth
+                    originalName = userFirebase.displayName
+                    binding.registerNameEditText.setText(originalName)
+                    updateActionButtonsState()
+                } else {
+                    // Único campo oficial: users/{uid}/name
+                    ref.child(uid).child("name")
+                        .addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                val rootName = snapshot.getValue(String::class.java)
+                                originalName = rootName ?: userFirebase.displayName
+                                binding.registerNameEditText.setText(originalName)
+                                updateActionButtonsState()
+                            }
+                            override fun onCancelled(error: DatabaseError) {
+                                originalName = userFirebase.displayName
+                                binding.registerNameEditText.setText(originalName)
+                                updateActionButtonsState()
+                            }
+                        })
+                }
+            } catch (e: Exception) {
+                // Fallback em caso de erro ao acessar DB
+                originalName = userFirebase.displayName
+                binding.registerNameEditText.setText(originalName)
+                updateActionButtonsState()
+            }
         }
 
         // Estado inicial do botão salvar
@@ -124,16 +158,49 @@ class PerfilUsuarioFragment : Fragment() {
                 positiveText = getString(R.string.profile_action_yes),
                 negativeText = getString(R.string.profile_action_no)
             ) {
-                val request = UserProfileChangeRequest.Builder()
-                    .setDisplayName(newName)
-                    .build()
-                auth.currentUser?.updateProfile(request)?.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
+                val current = auth.currentUser
+                if (current == null) {
+                    Toast.makeText(requireContext(), getString(R.string.profile_save_error), Toast.LENGTH_SHORT).show()
+                    return@showConfirmDialog
+                }
+                val ref = usersReference
+                if (ref == null) {
+                    Toast.makeText(requireContext(), getString(R.string.profile_save_error), Toast.LENGTH_SHORT).show()
+                    return@showConfirmDialog
+                }
+
+                val btn = binding.btnSaveChanges
+                val nameInput = binding.registerNameEditText
+                val btnLogout = binding.btnLogout
+                val oldText = btn?.text
+                btn?.isEnabled = false
+                nameInput.isEnabled = false
+                btnLogout.isEnabled = false
+                btn?.text = "Carregando..."
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        // 1) Salva no Realtime Database em users/{uid}/name (schema primário)
+                        ref.child(current.uid).child("name").setValue(newName).await()
+
+                        // 2) Atualiza também o displayName do FirebaseAuth
+                        val request = UserProfileChangeRequest.Builder()
+                            .setDisplayName(newName)
+                            .build()
+                        current.updateProfile(request).await()
+
+                        // 3) Remover campo legado 'nome' se existir
+                        try { ref.child(current.uid).child("nome").removeValue().await() } catch (_: Exception) { }
+
                         originalName = newName
                         updateActionButtonsState()
                         Toast.makeText(requireContext(), getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(requireContext(), getString(R.string.profile_save_error), Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Erro ao salvar: ${e.message}", Toast.LENGTH_LONG).show()
+                    } finally {
+                        btn?.isEnabled = true
+                        nameInput.isEnabled = true
+                        btnLogout.isEnabled = true
+                        btn?.text = oldText
                     }
                 }
             }
