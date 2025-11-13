@@ -10,6 +10,28 @@ import com.ifpr.androidapptemplate.databinding.FragmentHomeBinding
 import com.ifpr.androidapptemplate.ui.pomodoro.PomodoroViewModel
 import androidx.core.content.ContextCompat
 import com.ifpr.androidapptemplate.R
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.ifpr.androidapptemplate.MainActivity
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import android.media.AudioAttributes
+import android.net.Uri
+import android.provider.Settings
+import java.util.concurrent.TimeUnit
+import androidx.work.OneTimeWorkRequest
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import androidx.work.workDataOf
+import com.ifpr.androidapptemplate.ui.pomodoro.EndSessionNotificationWorker
 
 class HomeFragment : Fragment() {
 
@@ -19,6 +41,9 @@ class HomeFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
     private val pomodoroViewModel: PomodoroViewModel by activityViewModels()
+
+    private val channelId = "pomotiva_pomodoro"
+    private val notificationId = 1001
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,6 +60,8 @@ class HomeFragment : Fragment() {
 
         setupObservers()
         setupClicks()
+        ensureNotificationChannel()
+        ensureNotificationPermission()
         return root
     }
 
@@ -68,6 +95,11 @@ class HomeFragment : Fragment() {
             }
             updateModeTabs()
             updateStartPauseStyle()
+            // Reagenda a notificação de término quando o estado muda e está rodando
+            val running = pomodoroViewModel.isRunning.value == true
+            if (running) {
+                scheduleEndNotification()
+            }
         }
         pomodoroViewModel.remainingMillis.observe(viewLifecycleOwner) { millis ->
             binding.textTimer.text = formatMillis(millis)
@@ -90,6 +122,17 @@ class HomeFragment : Fragment() {
                 if (pomodoroViewModel.state.value == PomodoroViewModel.State.PAUSED) "RETOMAR" else "COMEÇAR"
             }
             updateStartPauseStyle()
+            if (running) {
+                scheduleEndNotification()
+            } else {
+                cancelEndNotification()
+            }
+        }
+        pomodoroViewModel.notificationEvent.observe(viewLifecycleOwner) { msg ->
+            if (msg != null) {
+                sendSystemNotification(msg)
+                pomodoroViewModel.consumeNotification()
+            }
         }
     }
 
@@ -138,6 +181,7 @@ class HomeFragment : Fragment() {
         val seconds = totalSeconds % 60
         return String.format("%02d:%02d", minutes, seconds)
     }
+
     private fun updateProgress(totalMillis: Long, remainingMillis: Long) {
         // Atualiza o arco de progresso de forma animada
         binding.pomoProgress.setProgressByMillis(totalMillis, remainingMillis, animate = true)
@@ -193,5 +237,96 @@ class HomeFragment : Fragment() {
             binding.textTabLong.setTextColor(unselectedTextColor)
             binding.underlineLong.visibility = View.VISIBLE
         }
+    }
+
+    private fun ensureNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = getString(R.string.app_name)
+            val descriptionText = "Notificações do Pomodoro"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, name, importance).apply {
+                description = descriptionText
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 200, 250)
+                val soundUri: Uri = Settings.System.DEFAULT_NOTIFICATION_URI
+                val attrs = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                setSound(soundUri, attrs)
+            }
+            val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun sendSystemNotification(message: String) {
+        val context = requireContext()
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, pendingFlags)
+
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.pomotiva_logo)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        with(NotificationManagerCompat.from(context)) {
+            if (Build.VERSION.SDK_INT >= 33) {
+                val granted = ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                if (!granted) return
+            }
+            notify(notificationId, builder.build())
+        }
+    }
+
+    private fun ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            val context = requireContext()
+            val granted = ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1000)
+            }
+        }
+    }
+
+    private fun scheduleEndNotification() {
+        val context = requireContext().applicationContext
+        val state = pomodoroViewModel.state.value
+        val running = pomodoroViewModel.isRunning.value == true
+        val remaining = pomodoroViewModel.remainingMillis.value ?: return
+        if (!running) return
+        if (state == PomodoroViewModel.State.PAUSED || state == PomodoroViewModel.State.IDLE) return
+
+        val message = when (state) {
+            PomodoroViewModel.State.WORK -> "Tempo de foco completo!"
+            PomodoroViewModel.State.SHORT_BREAK, PomodoroViewModel.State.LONG_BREAK -> "Pausa finalizada! Volte ao foco!"
+            else -> return
+        }
+
+        val data = workDataOf(
+            EndSessionNotificationWorker.KEY_MESSAGE to message
+        )
+        val request: OneTimeWorkRequest = OneTimeWorkRequestBuilder<EndSessionNotificationWorker>()
+            .setInitialDelay(remaining, TimeUnit.MILLISECONDS)
+            .setInputData(data)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            EndSessionNotificationWorker.UNIQUE_WORK,
+            androidx.work.ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+    private fun cancelEndNotification() {
+        val context = requireContext().applicationContext
+        WorkManager.getInstance(context).cancelUniqueWork(EndSessionNotificationWorker.UNIQUE_WORK)
     }
 }
