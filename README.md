@@ -1,4 +1,4 @@
-# Pomotiva — Template Android 2025
+# Pomotiva 
 
 Aplicativo Android de produtividade com Pomodoro, metas e estatísticas, integrado ao Firebase. Este template oferece uma base moderna para apps com autenticação, armazenamento na nuvem, gráficos e UI Material.
 
