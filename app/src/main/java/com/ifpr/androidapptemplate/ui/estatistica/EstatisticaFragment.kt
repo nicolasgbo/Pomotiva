@@ -99,6 +99,7 @@ class EstatisticaFragment : Fragment() {
                 renderMetaCards(map)
                 renderChart(map)
                 renderMeta2ProgressIfPossible()
+                renderCompletionKpiIfPossible()
             }
         }
         // Atualiza o target do período ao trocar o chip
@@ -109,6 +110,7 @@ class EstatisticaFragment : Fragment() {
                     val pd = repository.fetchPeriod(prefix)
                     periodTarget = pd.cycles_target
                     renderMeta2ProgressIfPossible()
+                    renderCompletionKpiIfPossible()
                 }
             } catch (_: Exception) { }
         }
@@ -148,9 +150,16 @@ class EstatisticaFragment : Fragment() {
         val focusMin = (today.focus_ms / 60000L).toInt()
         binding.tvKpiTempoValor.text = "$focusMin min"
         binding.tvKpiSessoesValor.text = today.cycles.toString()
-        val totalMs = today.focus_ms + today.break_ms
-        val taxa = if (totalMs > 0) (today.focus_ms.toDouble() / totalMs.toDouble() * 100.0) else 0.0
-        binding.tvKpiTaxaValor.text = String.format(Locale.getDefault(), "%.0f%%", taxa)
+    }
+
+    private fun renderCompletionKpiIfPossible() {
+        // Soma de ciclos do período selecionado (mapa já limitado por currentPeriodDays)
+        val totalCyclesInPeriod = lastDailyMap.values.sumOf { it.cycles }
+        val target = periodTarget
+        val pct = if (target > 0L) {
+            ((totalCyclesInPeriod.toDouble() * 100.0) / target.toDouble()).coerceIn(0.0, 100.0)
+        } else 0.0
+        binding.tvKpiTaxaValor.text = String.format(Locale.getDefault(), "%.0f%%", pct)
     }
 
     private fun renderMetaCards(dailyMap: Map<String, DailyStats>) {
