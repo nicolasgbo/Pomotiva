@@ -50,18 +50,6 @@ O app permite:
 3. Adicione o arquivo `google-services.json` em `app/`.
 4. Execute em um dispositivo/emulador (API 24+).
 
-## Configuração do Firebase
-1. Crie um projeto no Firebase Console e adicione um app Android com o `applicationId`:
-   - `com.ifpr.androidapptemplate`
-2. Baixe o `google-services.json` e coloque em `app/`.
-3. Ative produtos necessários:
-   - Authentication (Email/Password e Google)
-   - Realtime Database (ou Firestore, se pretende usar features correlatas)
-   - Storage (para avatares)
-4. Google Sign-In:
-   - Cadastre os SHA-1/SHA-256 do seu projeto (Debug/Release) no Firebase.
-   - Verifique o provedor Google em Authentication.
-
 ## Estrutura do projeto (resumo)
 ```
 app/
